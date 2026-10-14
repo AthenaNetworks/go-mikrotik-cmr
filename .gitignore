@@ -1,0 +1,6 @@
+/cmr-server
+/bin/
+*.out
+*.test
+*.snapshot
+coverage*

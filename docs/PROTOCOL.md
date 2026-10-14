@@ -1,0 +1,83 @@
+# CMR protocol notes (reverse-engineered)
+
+This document records what the CMR enrollment/control protocol looks like, as
+recovered **statically** from MikroTik's `cmr` binary (RouterOS 7.26beta1,
+i386) using Ghidra. It separates what was **observed** in the disassembly from
+what is **inferred** or **still unverified**. The Go code in this repo
+implements the observed structure; everything marked *pending* needs a packet
+capture or on-device test to confirm byte-level interoperability.
+
+## Process shape (observed)
+
+`cmr` is a RouterOS "Nova" daemon. `main` (`FUN_08052c55`) builds an
+`nv::Looper` event loop and registers managed-object stores on the Nova message
+bus: `dev`, `wifiradio`, `wifinet`, `vlan`, `layout`/`laynode`/`laylink`,
+`upgrade`/`upgrade/job`, `alert`, `inst`. Other RouterOS processes (console,
+WebFig/figman, www) drive it by reading/writing those stores. This project
+replaces the bus with an in-process `model.Store` + observer hooks.
+
+## Enrollment handshake (observed)
+
+Built on **PKEX** (the Public Key Exchange from Wi-Fi DPP / Easy Connect), over
+**NIST P-256** (`getECParamsForP256`). Classes: `PKEX`, `PKEXImpl`,
+`PKEXSrvImpl` (responder/controller), `PKEXClntImpl` (initiator/enrollee),
+transports `PKEXPushButton` / `PKEXConsole`.
+
+Frame dispatch is keyed by a message-type byte. Both `PKEXSrvImpl::handleFrame`
+(`FUN_0808cf6a`) and `PKEXClntImpl::handleFrame` (`FUN_0808dcb4`) were
+decompiled; the type map is **observed** (not guessed):
+
+| Type | Name            | Direction        | Handled by            |
+|------|-----------------|------------------|-----------------------|
+| 0x40 | DiscoveryReq    | client -> server | `PKEXSrvImpl`         |
+| 0x41 | DiscoveryResp   | server -> client | `PKEXClntImpl`        |
+| 0x42 | Msg1            | server -> client | `PKEXClntImpl`        |
+| 0x43 | Msg2            | client -> server | `PKEXSrvImpl`         |
+| 0x44 | Msg3            | server -> client | `PKEXClntImpl`        |
+| 0x45 | Msg4            | client -> server | `PKEXSrvImpl`         |
+
+Server state machine (`this+0xc8`, values observed in the decompile):
+
+```
+0 Init        -> on DiscoveryReq: log "session started", go 1, send DiscoveryResp
+1 Discovery1  -> (discovery handshake continues)
+2 Discovery2  -> log "discovery finished"; begin PKEX (send Msg1)
+3 Discovery3  -> on Msg2: auth ("auth failed (2)"), send Msg3, go 4
+4 Auth        -> on Msg4: decrypt, read "peer id" (32 bytes) + "received addrs",
+                 finish -> Srv::onPKEXResult -> add device to /dev store
+5 Done/killed -> e.g. "session overlap detected"
+```
+
+Per-message crypto primitives (observed as `PKEXImpl` methods, calling the
+external `BigNum`/`WCurve`/`ECPoint` library): `encrypt`/`decrypt`,
+`getPoint`, `reveal1`/`reveal2`, `authDeriveZ`, `auth1`/`auth2`. Error gates
+`auth failed (1..4)` and `protocol version missmatch` (a version field is
+checked `== 1` in `handleMsg1`).
+
+On success, `Srv::onPKEXResult` (`FUN_0805dac0`) copies the 32-byte peer id and
+inserts a row into the `dev` store (observed `m3` field ids `0x2001`, `0x200b`).
+
+## What is NOT in the binary (substituted here)
+
+- **EC math** (`BigNum`/`WCurve`/`ECPoint`) and **`m3::message` serialization**
+  are external RouterOS shared-library symbols, not statically present. This
+  repo uses Go's `crypto/ecdh` P-256 and its own `m3` codec.
+
+## Pending validation (do not assume interop yet)
+
+1. **Exact PKEX key schedule**: the DPP hash-to-curve for the password element,
+   the KDF labels, and the `auth1`/`auth2` tag inputs are not byte-confirmed.
+   The crypto is therefore behind a `pkex.Suite` interface; the bundled
+   `ReferenceSuite` is a correct P-256 PKEX-shaped handshake that interoperates
+   **with itself** (client role <-> server role in this repo), not yet with
+   MikroTik devices.
+2. **`m3` wire bytes**: our codec is structurally faithful (typed TLV: u32,
+   bytes, vector, nested) but not byte-identical to MikroTik's `m3`.
+3. **Transport**: real devices exchange these frames as link-layer frames via
+   the wifi stack (`PKEXPushButton::getIfs`/`send(...MacAddr)`). The bundled
+   transport is UDP for testing; an 802.11 action-frame transport is the seam
+   to implement for real interop.
+
+Confirming (1)–(3) needs a capture of a real CAP<->controller enrollment, or
+dynamic analysis on a device. Until then this is a complete, self-consistent
+controller, not a verified MikroTik-compatible one.
