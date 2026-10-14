@@ -81,3 +81,42 @@ inserts a row into the `dev` store (observed `m3` field ids `0x2001`, `0x200b`).
 Confirming (1)–(3) needs a capture of a real CAP<->controller enrollment, or
 dynamic analysis on a device. Until then this is a complete, self-consistent
 controller, not a verified MikroTik-compatible one.
+
+## Validated against a lab device (2026-10-14)
+
+Tested against MikroTik CHR 7.26beta1 running the `cmr` client, in an isolated
+two-VM lab (controller 10.99.0.113, client 10.99.0.114 on an L2 bridge).
+
+- **Transport confirmed:** the CMR control plane is **mutual TLS 1.2 on tcp/54321**.
+  The controller listens; the client connects from an ephemeral port. The client
+  is aimed with `/cmr/client/set controller-addresses=<ip> enabled=yes`; the
+  pairing password is set via `/cmr/client/pair password=...` (this is the PKEX
+  code).
+- **Identity/trust confirmed:** self-signed **Ed25519** certs. The lab client
+  cert: `CN="figman-1fef"` (CN = `figman-` + first 2 bytes of the id, hex),
+  validity 1970-01-01 .. 9999-12-31, `CA:TRUE`, self-referential SKI/AKI. The
+  CMR **device id is the SHA-256 of the identity** (this device: `1fef...`),
+  matching the 32-byte peer id PKEX exchanges.
+- **Interop gotcha (important):** MikroTik certs encode the `signatureAlgorithm`
+  as a **zero-length OBJECT IDENTIFIER** (empty OID) + NULL, in both
+  `tbsCertificate.signature` and the outer signature. Go's `crypto/x509` rejects
+  this with `x509: malformed OID`; OpenSSL tolerates it. A Go controller must
+  parse these leniently (rewrite the empty sig-alg OID to Ed25519 `1.3.101.112`
+  before `x509.ParseCertificate`) or terminate TLS via OpenSSL/socat. The device
+  **accepts a standard Ed25519 server cert** from us (our half of the handshake
+  works).
+- **First inner (post-TLS) client frame captured** (`docs/samples/first-inner-client-frame.hex`):
+  `11 dc d2 11 01 d8 70 7e ae 26 5b 81 f4 c7` — the client sends this 14-byte
+  hello and waits for a server reply. Our `m3` codec did not match it (expected);
+  decoding it plus the required server reply is the next milestone and needs a
+  bidirectional responder, not the one-way capture used here.
+
+A captured client certificate is saved at
+`docs/samples/mikrotik-cmr-client-cert.der` for parser work.
+
+### Reproduce
+- `go run ./cmd/cmr-learn -listen <ip>:54321` — a Go mutual-TLS endpoint; it
+  demonstrates the empty-OID blocker (fails to parse the client cert) until
+  lenient parsing is added.
+- `socat -u OPENSSL-LISTEN:54321,bind=<ip>,cert=ed.crt,key=ed.key,verify=0,fork OPEN:plain.bin,creat,append`
+  terminates TLS via OpenSSL and captures the inner client plaintext.
