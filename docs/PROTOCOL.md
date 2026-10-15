@@ -162,3 +162,49 @@ Terminating the TLS in pure Go (`cmd/cmr-learn`, no socat/OpenSSL):
 `cmd/cmr-learn` flags: `-listen`, `-reply mirror|mirror-all|serverhello|none`,
 `-mutual` (request client cert; fails on MikroTik's empty-OID until lenient
 parsing is added).
+
+## m3 wire format — fully decoded (2026-10-15)
+
+The post-TLS frames are **nv/m3 messages**. The codec is NOT in the `cmr`
+binary; it lives in the base-RouterOS `libumsg.so`, which `cmr` links. The
+base system ships as an NPK (`/var/pdb/system/image` inside the CHR disk:
+magic `0xbad0f11e`, squashfs at 0x1000) — extract it and `libumsg.so` is under
+`/lib`. The relevant symbols (i386, exported in `.dynsym`):
+`m3::message::{fold,unfold,measure}`, `m3::{encnum32,encnum64,fromraw32,getraw,
+putraw}`, `m3::message::read::{each,consume}`. `pkg/m3` reimplements them
+byte-for-byte (validated by `pkg/m3/m3_test.go` against the live frames).
+
+**Structure** (`message = field*`, `field = tag-chunk value-chunk`):
+
+- **chunk** = `intro` byte + data:
+  - `intro <= 0xcf` → the value is that single byte (inline integer / 1-byte blob).
+  - `0xd0..0xef` → a raw run of `intro-0xd0` bytes (lengths 0..31).
+  - `0xfe/0xfd/0xfc/0xfb/0xfa` → length = next `1/2/4/8/16` little-endian bytes, then that many data bytes.
+  - `0xff` → padding, skipped.
+- **tag** → `(type, id) = unfold(tag, prevID)`: `type = tag & 3` (2 physical wire
+  types; the logical type is resolved from the id's schema). The id is
+  **absolute** `tag>>3` when bit2==0, else **delta-coded** from the previous
+  field's id: `id = prevID ± (tag>>4)`, sign in bit3. `fold` picks whichever of
+  the absolute/delta forms is numerically smaller.
+- Numbers are little-endian raw bytes; nested messages are a field whose value
+  is itself an encoded message (schema-driven, not flagged on the wire).
+
+**Decoded handshake frames** (client -> server; all `type=1`):
+
+| Frame | Opcode (outer id) | Contents |
+|-------|-------------------|----------|
+| F1 | id=2  | 12-byte token `d2 11 01 d8 70 7e ae 26 5b 81 f4 c7` (constant) — hello |
+| F2 | id=1  | sub-msg { id=22: 4B nonce, id=25: 8B = build-time `0x6abe604b` + version `0x071a6201`, id=24: "CHR" } |
+| F3 | id=6  | sub-msg { id=22: 4B nonce, id=21: 1B sequence } |
+| F4 | id=1  | sub-msg { id=22: 4B nonce, id=21: 1B sequence } |
+
+Field ids: **id=22** = per-message 4-byte nonce; **id=21** = 1-byte session
+sequence (7, then 8 on the next connection); **id=25** = build-time+version
+(matches the NPK header); **id=24** = board/identity string. Outer ids 1/2/6 are
+the FigConn **respid**/opcode dispatch (`FigConn::recv: unhandled respid`).
+
+No EC/DH key material appears in the client's first four frames, so the
+password **key handshake** (`key handshake timeout (wrong pass)`) is driven by
+the **server's** replies, which the mirror probe cannot produce. Capturing the
+real server replies (a cert-tolerant TLS client to a live controller, since the
+empty-OID cert blocks Go *and* OpenSSL on the client side) is the next step.
