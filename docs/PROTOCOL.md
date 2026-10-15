@@ -208,3 +208,52 @@ password **key handshake** (`key handshake timeout (wrong pass)`) is driven by
 the **server's** replies, which the mirror probe cannot produce. Capturing the
 real server replies (a cert-tolerant TLS client to a live controller, since the
 empty-OID cert blocks Go *and* OpenSSL on the client side) is the next step.
+
+## Full bidirectional handshake — captured from a live controller (2026-10-15)
+
+`pkg/mtls` is a minimal, pure-Go TLS 1.2-ECDHE client that completes the
+handshake **without parsing the server certificate** (the only cipher is
+`0xc02b`; the Ed25519 cert is not needed to derive the ECDHE keys), sidestepping
+the empty-OID blocker. `cmd/cmr-dial` uses it to connect to a real controller
+as an enrollee and decode the replies.
+
+Findings against CHR 7.26beta1 controller (10.99.0.113):
+
+- The controller **requires a client certificate** (mutual TLS). With no client
+  cert it completes TLS then immediately closes. `cmr-dial` presents a
+  self-signed Ed25519 identity (+ a CertificateVerify, Ed25519 signing the
+  transcript per RFC 8422) and the controller then speaks.
+- Server leaf cert captured: `CN=figman-dfbe`, Ed25519 SPKI pubkey
+  `dfbeec82…3b4b58cf`, self-signed CA, validity 1970..9999, and the empty
+  `signatureAlgorithm` OID (`3004 0600 0500`). Saved to
+  `docs/samples/controller-cert.der`.
+- The control-channel bring-up is a symmetric 4-exchange (C = client/enrollee,
+  S = controller):
+
+  | Step | Dir | Frame | Meaning |
+  |------|-----|-------|---------|
+  | 1 | C→S | `{id2: d2 11 01 d8 ‖ nonce_C(8)}` | client hello |
+  | 2 | S→C | `{id2: d2 11 01 d8 ‖ nonce_S(8)}` | controller hello |
+  | 3 | S→C | `{id1:{id22 nonce, id25 build+ver, id24 "CHR"}}` | controller version/identity |
+  | 4 | C→S | `{id1:{id22 nonce, id25 build+ver, id24 "CHR"}}` | client version/identity |
+  | 5 | S→C | `{id6:{id22 nonce, id21 seq}}` | controller |
+  | 6 | C→S | `{id6:{id22 nonce, id21 seq}}` | client |
+  | 7 | S→C | `{id1:{id22 nonce, id21 seq}}` | controller |
+  | 8 | C→S | `{id1:{id22 nonce, id21 seq}}` | client |
+
+  The hello token is a constant 4-byte magic `d2 11 01 d8` + an 8-byte nonce.
+  After step 8 the controller holds the connection open (no EOF): the bring-up
+  completed. The replayed (stale) client nonces were accepted, so the id22
+  nonces are liveness tokens, not a validated challenge/response.
+- **Managed-device promotion still needs pairing.** The controller's
+  `/cmr/device/print` lists already-paired peers as CONNECTED with
+  `ids=<SHA-256(peer identity)>/<controller Ed25519 pubkey>`; a fresh unpaired
+  identity completes steps 1–8 but is **not** added to the device table. With
+  `/cmr/set pairing-requirement=password`, a new device must additionally pass
+  the password **key handshake** (the PKEX/`handleMsg1..4` path). That is the
+  only crypto-gated step and is required only to enroll a *new* device; a
+  controller with open pairing, or an already-paired identity, does not use it.
+
+So a byte-parity **controller** needs: mutual TLS with an Ed25519 identity,
+the 4-exchange bring-up above (bytes now known for both roles), optional
+password pairing for new devices, and then the management plane.
