@@ -120,3 +120,45 @@ A captured client certificate is saved at
   lenient parsing is added.
 - `socat -u OPENSSL-LISTEN:54321,bind=<ip>,cert=ed.crt,key=ed.key,verify=0,fork OPEN:plain.bin,creat,append`
   terminates TLS via OpenSSL and captures the inner client plaintext.
+
+## Discovery mechanism (answered 2026-10-15)
+
+Determined from the binary and live lab captures:
+
+- **Connection = direct IP + TCP.** The client is given `/cmr/client/set
+  controller-addresses=<ip>` and opens **tcp/54321** (mutual TLS). Lab captures
+  show only TCP/54321 for CMR.
+- **Not DNS SRV.** Zero DNS traffic in captures; no DNS/SRV resolver code or
+  strings in the `cmr` binary.
+- **Not MNDP.** The `cmr` binary contains no MNDP code (no `5678`/MNDP strings).
+  MNDP frames on the wire are RouterOS's *general* neighbor-discovery service
+  (TLVs: Identity, Version, Software-ID, Board, interfaces) that populates
+  `/ip/neighbor` independently of CMR — CMR does not use it to find controllers.
+- **CMR's own zero-config pairing is `push-button`**: link-layer PKEX discovery
+  (`DiscoveryReq 0x40` / `DiscoveryResp 0x41`, broadcast per interface via
+  `PKEXPushButton::getIfs`/`send`), not MNDP or DNS. After pairing the controller
+  address is stored and used directly over TCP/TLS.
+
+## Inner control handshake — pure-Go observation (2026-10-15)
+
+Terminating the TLS in pure Go (`cmd/cmr-learn`, no socat/OpenSSL):
+
+- The client completes **TLS 1.2 without presenting a client cert** when the
+  server does not request one (`ClientAuth: NoClientCert`), cipher
+  `ECDHE-ECDSA-AES128-GCM-SHA256`. So a pure-Go controller needs neither socat
+  nor lenient x509 to read the inner protocol; mutual-auth client-cert handling
+  (the empty-OID issue) only matters if/when we verify device identity at the
+  TLS layer. CMR's trust is the app-layer pinned-fingerprint pairing.
+- Frame sequence (revealed by mirroring each frame back — a probe, not real
+  controller content; one app frame per TLS record, no explicit length prefix):
+  1. client 14B hello: `11 dc d2 11 | 01(ver) | d8 70 7e ae 26 5b 81 f4 c7` (token constant across connections)
+  2. client 23B: `09 e5 b1 d4 | <4 rand> | 35 d8 | 4b 60 be 6a` (build time 0x6abe604b) `| 01 62 1a 07` (version bytes, same as NPK pkg-info) `| 1d d3 | "CHR"` (identity)
+  3. client 10B: `31 d8 b1 d4 d0 89 3e fe 1d 07`
+  4. client 10B: `09 d8 b1 d4 15 08 f0 fc 1d 07`
+- Mirroring advances the client through these steps. Real pairing needs correct
+  per-frame replies — next milestone: decode each frame's semantics and craft
+  controller responses.
+
+`cmd/cmr-learn` flags: `-listen`, `-reply mirror|mirror-all|serverhello|none`,
+`-mutual` (request client cert; fails on MikroTik's empty-OID until lenient
+parsing is added).
