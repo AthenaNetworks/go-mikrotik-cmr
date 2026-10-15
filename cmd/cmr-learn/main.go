@@ -33,7 +33,7 @@ import (
 func main() {
 	addr := flag.String("listen", "10.99.0.1:54321", "TLS listen address")
 	mutual := flag.Bool("mutual", false, "request a client cert at TLS layer (fails on MikroTik's empty-OID certs)")
-	reply := flag.String("reply", "mirror", "reply strategy for the first inner frame: mirror|serverhello|none")
+	reply := flag.String("reply", "mirror", "reply strategy: mirror|mirror-all|serverhello|handshake|none")
 	flag.Parse()
 
 	cert := identity()
@@ -88,7 +88,7 @@ func handle(tc *tls.Conn, reply string) {
 			if msg, derr := m3.Decode(frame); derr == nil {
 				log.Printf("[%s]   m3.Decode OK: %d field(s): %+v", peer, len(msg.Fields), msg.Fields)
 			}
-			if out := craftReply(reply, frame, first); out != nil {
+			for _, out := range craftReply(reply, frame, first) {
 				log.Printf("[%s] server->client %d bytes (reply=%s):\n%s", peer, len(out), reply, hexdump(out))
 				if _, werr := tc.Write(out); werr != nil {
 					log.Printf("[%s] write failed: %v", peer, werr)
@@ -104,33 +104,103 @@ func handle(tc *tls.Conn, reply string) {
 	}
 }
 
-// craftReply builds a probe reply to a client frame. first marks the opening
-// frame of the connection.
-func craftReply(strategy string, in []byte, first bool) []byte {
+// craftReply builds the controller's reply frames to a client frame. first
+// marks the opening frame of the connection.
+func craftReply(strategy string, in []byte, first bool) [][]byte {
 	switch strategy {
 	case "mirror":
 		if !first {
 			return nil
 		}
-		return append([]byte(nil), in...)
+		return [][]byte{append([]byte(nil), in...)}
 	case "mirror-all":
-		return append([]byte(nil), in...)
+		return [][]byte{append([]byte(nil), in...)}
 	case "serverhello":
-		if !first {
+		if !first || len(in) < 5 {
 			return nil
 		}
-		// Same framing as the observed hello (magic[4] ver[1] body[9]) with our
-		// own random 9-byte body, to see if the client treats us as a peer.
-		if len(in) >= 5 {
-			out := append([]byte(nil), in[:5]...)
-			body := make([]byte, len(in)-5)
-			_, _ = rand.Read(body)
-			return append(out, body...)
-		}
-		return nil
+		out := append([]byte(nil), in[:5]...)
+		body := make([]byte, len(in)-5)
+		_, _ = rand.Read(body)
+		return [][]byte{append(out, body...)}
+	case "handshake":
+		return handshakeReply(in)
 	default: // "none"
 		return nil
 	}
+}
+
+// CMR control-channel constants recovered from the live protocol.
+var (
+	helloMagic = []byte{0xd2, 0x11, 0x01, 0xd8}                         // hello token prefix
+	buildVer   = []byte{0x4b, 0x60, 0xbe, 0x6a, 0x01, 0x62, 0x1a, 0x07} // build-time + version
+	boardName  = []byte("CHR")
+)
+
+// m3 field ids on the control channel.
+const (
+	idHello   = 2  // hello frame opcode
+	idVerSeq  = 1  // version / nonce-seq frame opcode
+	idNonce   = 22 // per-message nonce
+	idBuildV  = 25 // build-time + version
+	idBoard   = 24 // board identity string
+	idSeqNo   = 21 // session sequence
+	idSeqFrm  = 6  // nonce/seq frame opcode
+	nonceSize = 4
+)
+
+// handshakeReply drives the controller side of the 4-exchange bring-up with
+// byte-parity frames, keyed on the decoded opcode/content of the client frame.
+func handshakeReply(in []byte) [][]byte {
+	msg, err := m3.Decode(in)
+	if err != nil || len(msg.Fields) == 0 {
+		return nil
+	}
+	f := msg.Fields[0]
+	switch f.ID {
+	case idHello: // client hello -> server hello + server version
+		return [][]byte{serverHello(), serverVersion()}
+	case idVerSeq, idSeqFrm:
+		inner, _ := m3.Decode(f.Value)
+		if inner != nil {
+			if _, ok := inner.GetBytes(idBuildV); ok { // client version (F2) -> nonce/seq on id6
+				return [][]byte{nonceSeq(idSeqFrm, clientSeq(inner))}
+			}
+			if f.ID == idSeqFrm { // client F3 (id6) -> nonce/seq on id1
+				return [][]byte{nonceSeq(idVerSeq, clientSeq(inner))}
+			}
+		}
+		return nil // client F4 (id1 nonce/seq) -> connected, idle
+	}
+	return nil
+}
+
+func serverHello() []byte {
+	token := append(append([]byte(nil), helloMagic...), randBytes(8)...)
+	return m3.New().PutBytes(idHello, token).Encode()
+}
+
+func serverVersion() []byte {
+	inner := m3.New().PutBytes(idNonce, randBytes(nonceSize)).PutBytes(idBuildV, buildVer).PutBytes(idBoard, boardName)
+	return m3.New().PutNested(idVerSeq, inner).Encode()
+}
+
+func nonceSeq(outerID uint32, seq byte) []byte {
+	inner := m3.New().PutBytes(idNonce, randBytes(nonceSize)).PutBytes(idSeqNo, []byte{seq})
+	return m3.New().PutNested(outerID, inner).Encode()
+}
+
+func clientSeq(inner *m3.Message) byte {
+	if b, ok := inner.GetBytes(idSeqNo); ok && len(b) == 1 {
+		return b[0]
+	}
+	return 7
+}
+
+func randBytes(n int) []byte {
+	b := make([]byte, n)
+	_, _ = rand.Read(b)
+	return b
 }
 
 func identity() tls.Certificate {
