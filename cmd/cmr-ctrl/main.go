@@ -35,7 +35,14 @@ import (
 	"os"
 	"time"
 
+	"github.com/athenanetworks/cmr-server/pkg/cmr"
 	"github.com/athenanetworks/cmr-server/pkg/m3"
+)
+
+// runtime flags (set in main)
+var (
+	verbose bool
+	probe   bool
 )
 
 // CMR control-channel constants recovered from the live protocol.
@@ -73,6 +80,8 @@ func main() {
 	addr := flag.String("listen", "10.99.0.1:54321", "TLS listen address")
 	keyfile := flag.String("keyfile", "", "path to persist the Ed25519 identity (stable fingerprint across restarts); empty = ephemeral")
 	idle := flag.Duration("idle", 0, "per-read idle timeout before closing a connection (0 = never, hold open)")
+	flag.BoolVar(&verbose, "v", false, "log a full recursive decode of every frame")
+	flag.BoolVar(&probe, "probe", false, "after SUCCESS, send id9 get-requests to elicit the device's objects (reading experiment)")
 	flag.Parse()
 
 	cert := identity(*keyfile)
@@ -136,6 +145,9 @@ func handle(tc *tls.Conn, idle time.Duration) {
 				log.Printf("[%s] C->S %d bytes (undecodable: %v)\n%s", c.peer, n, derr, hexdump(frame))
 			} else {
 				log.Printf("[%s] C->S %d bytes: %s", c.peer, n, summary(msg))
+				if verbose {
+					fmt.Print(m3.Dump(frame, 6))
+				}
 				for _, out := range c.step(msg) {
 					om, _ := m3.Decode(out)
 					log.Printf("[%s] S->C %d bytes: %s", c.peer, len(out), summary(om))
@@ -168,10 +180,15 @@ func (c *conn) step(msg *m3.Message) [][]byte {
 			}
 		}
 		// post-discovery id1 -> verAck, then id10 SUCCESS (promotion to "paired").
-		// NB: do NOT send fabricated id9 device-table rows here; the device
-		// replies id0{0x83 "not found"} to rows referencing devices it can't
-		// resolve, then drops the session. SUCCESS alone is what pairs it.
+		// NB: in normal operation do NOT send fabricated id9 device-table rows
+		// here; the device replies id0{0x83 "not found"} to rows referencing
+		// devices it can't resolve, then drops the session. SUCCESS alone pairs.
+		// With -probe we deliberately send the capture's id9 get-requests to see
+		// what objects the device returns (the reading experiment).
 		c.paired = true
+		if probe {
+			return [][]byte{verAck(c.discSeq, 0x01), successAndRows()} // SUCCESS + id9 get-requests
+		}
 		return [][]byte{verAck(c.discSeq, 0x01), successFrame()}
 
 	case idDisc, idResync: // C discovery/resync -> S ack (remember the seq for verAck)
@@ -187,9 +204,16 @@ func (c *conn) step(msg *m3.Message) [][]byte {
 		}
 		return [][]byte{discAck(0x15)}
 
-	case idDesc: // id0: device descriptor or an error report from the client
+	case idDesc: // id0: device descriptor, config object, or an error report
 		if b, ok := msg.GetBytes(idStatus); ok && len(b) == 1 && b[0] != 0 {
 			log.Printf("[%s]   client reports status=%#x (%q)", c.peer, b[0], strField(msg, 28))
+		}
+		if body, ok := msg.GetBytes(idDesc); ok {
+			if inner, _ := m3.Decode(body); cmr.IsDescriptor(inner) {
+				if d, err := cmr.ParseDescriptor(body); err == nil {
+					log.Printf("[%s]   READ %s", c.peer, d)
+				}
+			}
 		}
 		return nil // ack nothing; keep channel open
 

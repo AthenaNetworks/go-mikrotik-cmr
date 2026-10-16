@@ -23,6 +23,8 @@ package m3
 import (
 	"encoding/binary"
 	"errors"
+	"fmt"
+	"strings"
 )
 
 // Field ids observed in the cmr binary (queries and the dev object).
@@ -304,4 +306,75 @@ func leUint(b []byte) uint64 {
 		v |= uint64(b[i]) << (8 * i)
 	}
 	return v
+}
+
+// Dump returns a human-readable, recursively decoded view of an m3 message for
+// debugging and reverse-engineering. Nested fields are expanded only when the
+// value round-trips through the codec (a heuristic: opaque blobs that happen to
+// decode are still shown, but malformed nesting is left as raw bytes). depthMax
+// bounds recursion.
+func Dump(b []byte, depthMax int) string {
+	var sb strings.Builder
+	dumpInto(&sb, b, 0, depthMax)
+	return sb.String()
+}
+
+func dumpInto(sb *strings.Builder, b []byte, depth, depthMax int) {
+	msg, err := Decode(b)
+	if err != nil || msg == nil {
+		return
+	}
+	ind := strings.Repeat("  ", depth+1)
+	for _, f := range msg.Fields {
+		v := f.Value
+		asc := make([]byte, 0, len(v))
+		for _, c := range v {
+			if c >= 0x20 && c < 0x7f {
+				asc = append(asc, c)
+			} else {
+				asc = append(asc, '.')
+			}
+		}
+		shown := v
+		trail := ""
+		if len(shown) > 48 {
+			shown = shown[:48]
+			trail = "…"
+			asc = asc[:min(len(asc), 48)]
+		}
+		fmt.Fprintf(sb, "%sid=%-4d len=%-4d %x%s |%s|\n", ind, f.ID, len(v), shown, trail, asc)
+		if len(v) >= 2 && depth < depthMax {
+			if sub, e := Decode(v); e == nil && sub != nil && len(sub.Fields) > 0 && bytesEqual(sub.Encode(), v) {
+				dumpInto(sb, v, depth+1, depthMax)
+			}
+		}
+	}
+}
+
+func bytesEqual(a, b []byte) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+// FirstChunk reads the first m3 chunk from b (the getraw primitive), returning
+// its data and the number of input bytes consumed. It is exported for decoders
+// of fields whose value is itself chunk-framed (wire type 2 string fields such
+// as the descriptor's os field carry their value as a single length-chunk).
+func FirstChunk(b []byte) (data []byte, n int, err error) {
+	data, p, err := readChunk(b, 0)
+	return data, p, err
 }
