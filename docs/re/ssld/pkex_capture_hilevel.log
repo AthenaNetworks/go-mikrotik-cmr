@@ -1,0 +1,109 @@
+[libu/?] WCurve.mul caller=080593ac args=ffffd35c,ffffd344,f7ef745c,ffffd2cc,ffffd350,00000000
+  k.hdr=207aeff7407aeff70704030401080405
+  k.d0=d63d7d8e0e7b6e3bb1bf338db81e2208b3f8aa860a4ee456471fbbf38ae8e9470000000020cbfff7
+  k.d1=0000000020cbfff73100000031000000010000000000000000000000ffffffffffffffffffffffff
+  p.hdr=d07aeff7f07aeff760a50608007beff7
+[libu/?] WCurve.mul caller=f7f19244 args=ffffd084,ffffd060,ffffd038,ffffd0a8,f7ffca00,00000040
+[libu/?] WCurve.mul caller=f7f18fd9 args=ffffcf98,ffffcf74,ffffd048,ffffcfbc,00000002,0806aa90
+[libu/?] WCurve.mul caller=080593ac args=ffffd35c,ffffd344,f7ef745c,ffffd2bc,ffffd350,ffffd4b4
+  k.hdr=207aeff7407aeff70704030401080405
+  k.d0=d63d7d8e0e7b6e3bb1bf338db81e2208b3f8aa860a4ee456471fbbf38ae8e9470000000020cbfff7
+  k.d1=0000000020cbfff73100000041000000302a300506032b657003210041e16dc97412ec68bb9b0d87
+  p.hdr=e073eff70074eff7807beff770a80608
+[libu/?] HMAC.ctor caller=08058182 args=ffffd154,ffffd1e4,0806a850,00000020,f7ef6ff4,ffffd33c
+  klen=32 key=b47a9e0178b2127d9569369bf47f94619ea806b4f5143d08b1068366950fd1e1
+[libu/?] HMAC.upd caller=08057de9 args=ffffd154,ffffd0f0,0000004d,0000004d,00000048,0806a940
+  ulen=77 data=6d6173746572207365637265746eb4d8902ace72db8dc70b452f0795caf18bceeb3cc81c54ab9b8a384bc53046a507c000240ba11b3b33166cd79f9405f8382a84b949eca5238deafb7a628167
+[libu/?] HMAC.dig caller=08057df4 args=ffffd154,ffffd060,0000004d,0000004d,00000048,0806a940
+  (out filled after return)
+[libu/?] HMAC.upd caller=08057e04 args=ffffd154,ffffd060,00000020,ffffd380,d9d5ffb0,8053aa65
+  ulen=32 data=b0ffd5d965aa5380eb5b03523b3b8b2bd135e25fa1ce4b3b01be8d3513820270
+[libu/?] HMAC.upd caller=08057e13 args=ffffd154,ffffd0f0,0000004d,ffffd380,d9d5ffb0,8053aa65
+  ulen=77 data=6d6173746572207365637265746eb4d8902ace72db8dc70b452f0795caf18bceeb3cc81c54ab9b8a384bc53046a507c000240ba11b3b33166cd79f9405f8382a84b949eca5238deafb7a628167
+[libu/?] HMAC.dig caller=08057e1e args=ffffd154,ffffd080,0000004d,ffffd380,d9d5ffb0,8053aa65
+  (out filled after return)
+[libu/?] HMAC.upd caller=08057de9 args=ffffd154,ffffd060,00000020,00000020,d9d5ffb0,8053aa65
+  ulen=32 data=b0ffd5d965aa5380eb5b03523b3b8b2bd135e25fa1ce4b3b01be8d3513820270
+[libu/?] HMAC.dig caller=08057df4 args=ffffd154,ffffd060,00000020,00000020,d9d5ffb0,8053aa65
+  (out filled after return)
+[libu/?] HMAC.upd caller=08057e04 args=ffffd154,ffffd060,00000020,ffffd0a0,8b537a76,395d3c90
+  ulen=32 data=767a538b903c5d39097c5bd5877a5691106c221c129c9eb9c503415e71c6c4b5
+[libu/?] HMAC.upd caller=08057e13 args=ffffd154,ffffd0f0,0000004d,ffffd0a0,8b537a76,395d3c90
+  ulen=77 data=6d6173746572207365637265746eb4d8902ace72db8dc70b452f0795caf18bceeb3cc81c54ab9b8a384bc53046a507c000240ba11b3b33166cd79f9405f8382a84b949eca5238deafb7a628167
+[libu/?] HMAC.dig caller=08057e1e args=ffffd154,ffffd080,0000004d,ffffd0a0,8b537a76,395d3c90
+  (out filled after return)
+[libu/?] HMAC.ctor caller=08058182 args=ffffd154,ffffd1e4,f7ef7990,00000030,f7ef6ff4,ffffd33c
+  klen=48 key=c6cb16cd219517a283e78928315aeb7b963fcc0c2db927854f24d48ff9482b9a66fae4fe92cc5ce6bc259c4ca1bf1f59
+[libu/?] HMAC.upd caller=08057de9 args=ffffd154,ffffd0f0,0000004d,0000004d,8b537a76,395d3c90
+  ulen=77 data=6b657920657870616e73696f6ea507c000240ba11b3b33166cd79f9405f8382a84b949eca5238deafb7a6281676eb4d8902ace72db8dc70b452f0795caf18bceeb3cc81c54ab9b8a384bc53046
+[libu/?] HMAC.dig caller=08057df4 args=ffffd154,ffffd060,0000004d,0000004d,8b537a76,395d3c90
+  (out filled after return)
+[libu/?] HMAC.upd caller=08057e04 args=ffffd154,ffffd060,00000020,ffffd340,8a848e07,019a116f
+  ulen=32 data=078e848a6f119a0119a8ca9f845060e4769c82640350bcbbd9c0d754f4e44f3c
+[libu/?] HMAC.upd caller=08057e13 args=ffffd154,ffffd0f0,0000004d,ffffd340,8a848e07,019a116f
+  ulen=77 data=6b657920657870616e73696f6ea507c000240ba11b3b33166cd79f9405f8382a84b949eca5238deafb7a6281676eb4d8902ace72db8dc70b452f0795caf18bceeb3cc81c54ab9b8a384bc53046
+[libu/?] HMAC.dig caller=08057e1e args=ffffd154,ffffd080,0000004d,ffffd340,8a848e07,019a116f
+  (out filled after return)
+[libu/?] HMAC.upd caller=08057de9 args=ffffd154,ffffd060,00000020,00000020,8a848e07,019a116f
+  ulen=32 data=078e848a6f119a0119a8ca9f845060e4769c82640350bcbbd9c0d754f4e44f3c
+[libu/?] HMAC.dig caller=08057df4 args=ffffd154,ffffd060,00000020,00000020,8a848e07,019a116f
+  (out filled after return)
+[libu/?] HMAC.upd caller=08057e04 args=ffffd154,ffffd060,00000020,ffffd0a0,fca87946,d4a19429
+  ulen=32 data=4679a8fc2994a1d4470c203de8846ab330227fc05b1f861dca0cf5e81629299a
+[libu/?] HMAC.upd caller=08057e13 args=ffffd154,ffffd0f0,0000004d,ffffd0a0,fca87946,d4a19429
+  ulen=77 data=6b657920657870616e73696f6ea507c000240ba11b3b33166cd79f9405f8382a84b949eca5238deafb7a6281676eb4d8902ace72db8dc70b452f0795caf18bceeb3cc81c54ab9b8a384bc53046
+[libu/?] HMAC.dig caller=08057e1e args=ffffd154,ffffd080,0000004d,ffffd0a0,fca87946,d4a19429
+  (out filled after return)
+[libu/?] WCurve.mul caller=f7f196c4 args=ffffd064,ffffd0d0,ffffd018,ffffd118,f7ef7b20,f7ef7b40
+[libu/?] WCurve.mul caller=f7f196ef args=ffffd040,ffffd0d0,ffffd010,ffffd0ac,f7ef7b20,f7ef7b40
+[libu/?] HMAC.ctor caller=08058182 args=ffffd1a4,ffffd234,f7ef7990,00000030,f0150cc1,6a86f853
+  klen=48 key=c6cb16cd219517a283e78928315aeb7b963fcc0c2db927854f24d48ff9482b9a66fae4fe92cc5ce6bc259c4ca1bf1f59
+[libu/?] HMAC.upd caller=08057de9 args=ffffd1a4,ffffd160,0000002f,0000002f,0806a8f0,0806a8f0
+  ulen=47 data=636c69656e742066696e697368656452df16ac083944d4778b2dabc13d1fea670eb2cef6e6d17da3516509449ce08a
+[libu/?] HMAC.dig caller=08057df4 args=ffffd1a4,ffffd0d0,0000002f,0000002f,0806a8f0,0806a8f0
+  (out filled after return)
+[libu/?] HMAC.upd caller=08057e04 args=ffffd1a4,ffffd0d0,00000020,ffffd350,6ad3eaee,95a2b26a
+  ulen=32 data=eeead36a6ab2a2957fefe8cccca294c420452f0369c6b91177c00f0535f5152d
+[libu/?] HMAC.upd caller=08057e13 args=ffffd1a4,ffffd160,0000002f,ffffd350,6ad3eaee,95a2b26a
+  ulen=47 data=636c69656e742066696e697368656452df16ac083944d4778b2dabc13d1fea670eb2cef6e6d17da3516509449ce08a
+[libu/?] HMAC.dig caller=08057e1e args=ffffd1a4,ffffd0f0,0000002f,ffffd350,6ad3eaee,95a2b26a
+  (out filled after return)
+[libu/?] HMAC.ctor caller=08058182 args=ffffd1a4,ffffd234,f7ef7990,00000030,f0150cc1,c0138667
+  klen=48 key=c6cb16cd219517a283e78928315aeb7b963fcc0c2db927854f24d48ff9482b9a66fae4fe92cc5ce6bc259c4ca1bf1f59
+[libu/?] HMAC.upd caller=08057de9 args=ffffd1a4,ffffd160,0000002f,0000002f,6ad3eaee,95a2b26a
+  ulen=47 data=7365727665722066696e6973686564d3648910a4d7609b43a4d0c63cfac86446aa36b1cb8b251e80f8b7ab9a296e9e
+[libu/?] HMAC.dig caller=08057df4 args=ffffd1a4,ffffd0d0,0000002f,0000002f,6ad3eaee,95a2b26a
+  (out filled after return)
+[libu/?] HMAC.upd caller=08057e04 args=ffffd1a4,ffffd0d0,00000020,ffffd350,203d0202,dfeed687
+  ulen=32 data=02023d2087d6eedf0f0ac377d769233263e8ef52756a8532110bcb5d6b0e6203
+[libu/?] HMAC.upd caller=08057e13 args=ffffd1a4,ffffd160,0000002f,ffffd350,203d0202,dfeed687
+  ulen=47 data=7365727665722066696e6973686564d3648910a4d7609b43a4d0c63cfac86446aa36b1cb8b251e80f8b7ab9a296e9e
+[libu/?] HMAC.dig caller=08057e1e args=ffffd1a4,ffffd0f0,0000002f,ffffd350,203d0202,dfeed687
+  (out filled after return)
+[libu/?] WCurve.mul caller=f7ee6a39 args=ffffc9cc,ffffcbb0,ffffc9c4,ffffcc1c,ffffca3c,ffffca84
+[libu/?] WCurve.mul caller=08055321 args=ffffcbf8,ffffcbb0,f7fbbea0,ffffcbd4,f7f3a4a0,f7fbbe80
+  k.hdr=10a8f3f730a8f3f70000000000000000
+  k.d0=6c3989f47971a4d6d80c9fa793307e10917c2a5ec2bea2bb1a5190d3d977ab13008cbf7f00800100
+  k.d1=008cbf7f008001003100000031000000142c31815d3a16d64d9e839281b2c26db32eb788d322e11f
+  p.hdr=10a9f3f730a9f3f710a3f3f740a8f3f7
+[libu/?] WCurve.add caller=0805538c args=ffffcbb0,ffffcc40,ffffcc1c,ffffcc64,f7f3a4a0,f7fbbe80
+  A.x=cac98ee0611d98f64314da82d1b3d725f9f8c9b194f0011531a5e7be424e3d11
+  A.y=01000000fa1fe70fee0ffcbfeb841b51c2cff8221a05d516dd7d667fd4a74f06
+  B.x=cb2c53bb8680d462b67b5d44e6c19a6e52109714eeab88c7bb6e92780f8da122
+  B.y=2c3333ba9db3cd75310000001100000009000000d0c9fff71100000011000000
+[libu/?] WCurve.mul caller=f7ee6a39 args=ffffcaac,ffffcb64,ffffcaa4,ffffcbac,00000000,f7f3a780
+[libu/?] WCurve.mul caller=08056e31 args=ffffcbd0,ffffcb64,ffffcb4c,ffffcb88,00000021,000002d0
+  k.hdr=10abf3f730abf3f701000000ffffffff
+  k.d0=c3c8f9618e1e1812d778f7d7f69bfef81d57b29bff5053b72e5f2d143447e4bd00b732b702eb72ca
+  k.d1=00b732b702eb72caee84784222250ec5e7000000f0cafff741000000310000002e2f706f80496241
+  p.hdr=90bbfbf7b0bbfbf7e0bcfbf7b0acf3f7
+[libu/?] WCurve.add caller=08056f0a args=ffffcb64,ffffcbf4,ffffcbd0,ffffcc18,f7f3ada4,ffffcb64
+  A.x=70f2a6f3ba8ba10b4cd2501cd3e2975716505f04469fb5f4bf4e47617e10301f
+  A.y=02000000aedf585a31000000110000000100000010cbfff71100000040010000
+  B.x=39cbbd0673b955d0d632ccd4201313fcfed8d5e37c673b07d55b9272973ba057
+  B.y=01000000999ae824b0443e3475c575710c2f2e8e310e3fc0e4671a399b47d806
+[libu/?] WCurve.mul caller=08056f45 args=ffffcc18,ffffcb64,f7fbbea0,ffffcbf4,00000021,000002d0
+  k.hdr=10a8f3f730a8f3f750abf3f771abf3f7
+  k.d0=6c3989f47971a4d6d80c9fa793307e10917c2a5ec2bea2bb1a5190d3d977ab13008cbf7f00800100
+  k.d1=008cbf7f0080010031000000a10000000100000010a3f3f70000000000000000e0a8f3f70022e11f
+  p.hdr=806b0608a06b0608e0bcfbf7d06b0608
