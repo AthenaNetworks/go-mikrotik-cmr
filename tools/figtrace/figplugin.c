@@ -30,8 +30,8 @@ static const struct { uint64_t addr; int kind; int bin; const char *name; } SITE
   {0xf7eedc6e, K_HMACUPD,  2, "HMAC.upd"}, {0xf7eedcac, K_HMACDIG, 2, "HMAC.dig"},
   {0xf7ef6f6e, K_SIVENC,   2, "AESSIV.enc"}, {0xf7ef7078, K_SIVDEC, 2, "AESSIV.dec"},
   {0xf7ef3680, K_EC, 2, "WCurve.mul"}, {0xf7ef3290, K_EC, 2, "WCurve.add"},
-  {0xf7ef2d60, K_EC, 2, "ECPoint.toBin"}, {0xf7ef2b70, K_EC, 2, "ECPoint.fromOct"},
-  {0xf7efc554, K_EC, 2, "getECParams"}, {0xf7eedaf2, K_EC, 2, "SHA256.dig"},
+  {0xf7ef2d60, K_EC, 2, "ECPoint.toBin"},
+  {0xf7efc554, K_EC, 2, "getECParams"},
 };
 #define NSITE (sizeof(SITE)/sizeof(SITE[0]))
 static const uint64_t SIG_AT[2] = {0x807592dULL, 0x809070aULL};
@@ -63,6 +63,27 @@ static void loghex(uint64_t addr, uint32_t n) {
   if (rdmem(addr, buf, n) == (int)n) for (uint32_t i = 0; i < n; i++) fprintf(LOG, "%02x", buf[i]);
   fputc('\n', LOG);
 }
+/* deferred output capture: record an op's output ptr, read it at the NEXT op (filled by then) */
+#define MAXPEND 12
+#define PEND_RAW 0
+#define PEND_VEC 1
+static struct { char label[40]; uint32_t ptr; uint32_t len; int type; } pend[MAXPEND];
+static int npend;
+static void flush_pending(void) {
+  for (int i = 0; i < npend; i++) {
+    if (pend[i].type == PEND_VEC) {
+      uint32_t b = rd32(pend[i].ptr), e = rd32(pend[i].ptr + 4);
+      fprintf(LOG, "    <OUT %s vec[%u]=", pend[i].label, (b && e >= b) ? e - b : 0);
+      if (b && e > b && e - b <= 512) loghex(b, e - b); else fprintf(LOG, "(b=%08x e=%08x)\n", b, e);
+    } else {
+      fprintf(LOG, "    <OUT %s [%u]=", pend[i].label, pend[i].len); loghex(pend[i].ptr, pend[i].len);
+    }
+  }
+  npend = 0;
+}
+static void defer(const char *lbl, uint32_t ptr, uint32_t len, int type) {
+  if (npend < MAXPEND && ptr) { snprintf(pend[npend].label, 40, "%s", lbl); pend[npend].ptr = ptr; pend[npend].len = len; pend[npend].type = type; npend++; }
+}
 /* dump vector<uchar> {begin,end,cap} at p -> label + hex */
 static void logvec(uint32_t p, const char *tag) {
   fprintf(LOG, "%s", tag);
@@ -90,12 +111,14 @@ static void on_exec(unsigned int vcpu, void *ud) {
   int si = (int)(intptr_t)ud;          /* SITE index */
   int kind = SITE[si].kind, bin = SITE[si].bin;
   if (bin < 2 && !sig_ok(bin)) return; /* exe PLTs: confirm binary; libu(bin2): log all */
+  { uint32_t c0 = read_esp(); if (c0) { uint32_t cl = rd32(c0); if (bin==2 && (cl < 0x8048000u || cl >= 0x8064000u)) return; } }
   const char *proc = sig_ok(0) ? "figman" : (sig_ok(1) ? "cmr" : "?");
   uint32_t esp = read_esp();
   if (!esp) return;
   uint32_t caller = rd32(esp);
   uint32_t a0 = rd32(esp + 4), a1 = rd32(esp + 8), a2 = rd32(esp + 12), a3 = rd32(esp + 16), a4 = rd32(esp + 20), a5 = rd32(esp + 24);
   if (!strcmp(SITE[si].name,"WCurve.add") && caller >= 0xf0000000u) return; /* skip 593 internal adds */
+  flush_pending();  /* read previous op's deferred outputs (now filled) */
 
   fprintf(LOG, "[%s/%s] %s caller=%08x args=%08x,%08x,%08x,%08x,%08x,%08x\n",
           BINNAME[bin], proc, SITE[si].name, caller, a0, a1, a2, a3, a4, a5);
@@ -106,8 +129,11 @@ static void on_exec(unsigned int vcpu, void *ud) {
   } else if (kind == K_HMACUPD) { /* this,data,len */
     fprintf(LOG, "  ulen=%u data=", a2); loghex(a1, a2 <= 1024 ? a2 : 0);
   } else if (kind == K_HMACDIG) {
-    fprintf(LOG, "  (out filled after return)\n");
+    defer("HMAC.tag", a1, 32, PEND_RAW);   /* out tag, read at next op */
   } else if (kind == K_EC) {
+    if (!strcmp(SITE[si].name,"ECPoint.toBin")) {
+      defer("toBin.out", a0, 0, PEND_VEC); /* sret vector = encoded point (wire bytes) */
+    }
     /* WCurve.mul(sret,this,&k,&p): dump scalar+point for high-level (exe) callers */
     if (!strcmp(SITE[si].name,"WCurve.mul") && caller >= 0x8048000u && caller < 0x80a00000u) {
       fprintf(LOG, "  k.hdr="); loghex(a2, 16);
@@ -118,8 +144,12 @@ static void on_exec(unsigned int vcpu, void *ud) {
       fprintf(LOG, "  a0deref="); loghex(rd32(a0), 40);
     } else if (!strcmp(SITE[si].name,"WCurve.add") && caller >= 0x8048000u && caller < 0x8063000u) {
       /* add(this,&a,&b,RedNum): a1=&a(X->M), a2=&b(Qpw). Point={BigNum x@+0, y@+16}; BigNum.limbs=deref(+0) */
-      fprintf(LOG, "  A.x="); loghex(rd32(a1), 32); fprintf(LOG, "  A.y="); loghex(rd32(a1+16), 32);
-      fprintf(LOG, "  B.x="); loghex(rd32(a2), 32); fprintf(LOG, "  B.y="); loghex(rd32(a2+16), 32);
+      fprintf(LOG, "  A.hdr="); loghex(a1, 24);
+      fprintf(LOG, "  A.d[0]="); loghex(rd32(a1), 32); fprintf(LOG, "  A.d[4]="); loghex(rd32(a1+4), 32);
+      fprintf(LOG, "  A.d[8]="); loghex(rd32(a1+8), 32); fprintf(LOG, "  A.d[c]="); loghex(rd32(a1+12), 32);
+      fprintf(LOG, "  B.hdr="); loghex(a2, 24);
+      fprintf(LOG, "  B.d[0]="); loghex(rd32(a2), 32); fprintf(LOG, "  B.d[4]="); loghex(rd32(a2+4), 32);
+      fprintf(LOG, "  B.d[8]="); loghex(rd32(a2+8), 32); fprintf(LOG, "  B.d[c]="); loghex(rd32(a2+12), 32);
     }
   } else if (kind == K_SIVENC || kind == K_SIVDEC) { /* SIV: this,span,vec<span>,out */
     uint32_t sp = rd32(a1), ssz = rd32(a1 + 4);
