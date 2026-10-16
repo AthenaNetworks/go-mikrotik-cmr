@@ -290,11 +290,49 @@ Full decoded capture: `docs/samples/pairing-handshake.txt`.
 **Post-pairing management is plaintext m3 over the TLS channel** (no additional
 encryption layer) — the PAKE only authenticates the device and pins its cert.
 
-### Open item — the PAKE math
-The element sizes (33-byte client commit, 49-byte server response, 32-byte
-confirms, all SHA-256-shaped) and the `PKEXImpl::{encrypt,decrypt,reveal1,
-reveal2,authDeriveZ,auth1,auth2}` methods in `pkex/pkex.cpp` point to a
-DPP/PKEX-derived password handshake over P-256 (likely AES-GCM-wrapped points
-— 49 = 33-byte point + 16-byte tag). Deriving the exact KDF/confirm inputs from
-the binary + this capture is the remaining work to make our controller pair a
-new device (`cmd/cmr-mitm` + the capture give the ground-truth bytes to match).
+### The PAKE — algorithm stack and crypto map (reverse-engineered)
+
+The password handshake is an **EKE-style PKEX**: each side encrypts its
+ephemeral P-256 public point under a key derived from the password, exchanges
+it, both run ECDH to a shared secret, and confirm with HMAC. The primitives
+(all in `libucrypto.so`, which `cmr` links) are:
+
+- **P-256** — `getECParamsForP256`, `WCurve::{mul,add,isOnCurve,toEC,fromEC}`,
+  `ECPoint::{toBin(len,compressed),fromOctetString}`, `BigNum`, `randomBigNum`.
+  The ephemeral point serializes via `ECPoint::toBin(0x20, compressed)` → the
+  33-byte compressed point seen on the wire.
+- **SHA-256** (`SHA256`, `createHash`), **HMAC-SHA256** (`HMAC`).
+- **HKPDF** — an HKDF-style KDF, `HKPDF(Hash&, salt, ikm, info, len)`.
+- **AES-SIV** (RFC 5297), `AESSIV::{encrypt,decrypt}(plaintext, vector<AD>, out)`
+  — deterministic AEAD; its 16-byte SIV is why the server response is
+  `49 = 16 + 33` (SIV ‖ encrypted 33-byte point).
+
+`PKEXImpl` methods: `encrypt`/`decrypt` (AES-SIV wrap of a point),
+`getPoint` (parse+validate), `reveal1`/`reveal2` (send/consume the encrypted
+point), `authDeriveZ(BigNum,BigNum)` (shared-secret → Z), `auth1`/`auth2`
+(HMAC confirm compute/verify). Errors gate as `auth failed (1..4)`.
+
+**Crypto call sites in `cmr` (for continued RE / byte-exact extraction):**
+
+| What | Address(es) | Notes |
+|------|-------------|-------|
+| password → key (`HKPDF`) | `0x8055a9d`, `0x8055c73` | identity/password key derivation |
+| AES-SIV encrypt | `0x80867c7` | wrap ephemeral point |
+| AES-SIV decrypt | `0x80868f1` | unwrap peer point |
+| derive (`createHash`+`HKPDF`) | `0x8089948`, `0x808997a` | `authDeriveZ` / Z |
+| HMAC confirm | `0x8089bc6`, `0x8089ee3` | `auth1`/`auth2` (32-byte tags) |
+| ephemeral keygen | `0x808a1f5`+`0x808a3d4` | `getECParamsForP256`+`randomBigNum` |
+| server frame handler | `FUN_0808cf6a` | `PKEXSrvImpl::handleFrame` (Msg2/Msg4) |
+| client frame handler | `FUN_0808dcb4` | `PKEXClntImpl::handleFrame` (Msg1/Msg3) |
+
+Snapshot for REA: `/home/josh/cmr/extract/cmr.snapshot`. The wire bytes to
+match are in `docs/samples/pairing-handshake.txt`; `cmd/cmr-mitm` re-captures a
+live pairing on demand.
+
+**Remaining to implement a controller that enrols a new device:** extract the
+exact `HKPDF` inputs (salt/ikm/info — password, username `admin`, scope
+`com.mikrotik.cmr`, role labels), the AES-SIV associated-data vector, and the
+HMAC confirm transcript from the functions above, then implement the server
+role in Go (`crypto/ecdh` P-256 + `crypto/hmac` + `golang.org/x/crypto/hkdf` +
+an AES-SIV lib) and validate against the lab cli (`/cmr/client/reset`, point at
+our controller, confirm it reaches the controller's device table).
