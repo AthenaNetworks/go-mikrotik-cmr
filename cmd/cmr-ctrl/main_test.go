@@ -73,8 +73,8 @@ func TestSuccessAndRowsBytes(t *testing.T) {
 }
 
 func TestServerHelloShape(t *testing.T) {
-	// S id2 hello: magic d21101d8 + 8 bytes; token held to the capture's
-	got := withNonce(hx(t, "acec0a1b7c1ad815"), serverHello)
+	// S id2 hello is the fixed constant the real controller emits.
+	got := serverHello()
 	want := hx(t, "11dcd21101d8acec0a1b7c1ad815")
 	if !eq(got, want) {
 		t.Fatalf("serverHello\n got %x\nwant %x", got, want)

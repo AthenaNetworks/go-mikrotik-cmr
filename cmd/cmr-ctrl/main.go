@@ -53,7 +53,14 @@ var (
 
 // CMR control-channel constants recovered from the live protocol.
 var (
-	helloMagic = []byte{0xd2, 0x11, 0x01, 0xd8}                         // hello token prefix
+	helloMagic = []byte{0xd2, 0x11, 0x01, 0xd8} // hello token prefix
+	// helloToken is the controller's 8-byte hello suffix. It is a FIXED protocol
+	// constant (a version/capability identifier), not a random nonce: the real
+	// RouterOS 7.26 controller always sends acec0a1b7c1ad815 (the device always
+	// sends 707eae265b81f4c7). Randomizing it still pairs but makes the device
+	// treat us as an incompatible peer (it then adds an id26 to its version and
+	// answers object requests with "not found").
+	helloToken = []byte{0xac, 0xec, 0x0a, 0x1b, 0x7c, 0x1a, 0xd8, 0x15}
 	buildVer   = []byte{0x4b, 0x60, 0xbe, 0x6a, 0x01, 0x62, 0x1a, 0x07} // build-time + version
 	boardName  = []byte("CHR")
 	scopeName  = []byte("com.mikrotik.cmr")
@@ -278,19 +285,21 @@ func (c *conn) step(f m3.Field) [][]byte {
 
 const idQuery = 4 // query body inside a discovery/resync/getall opcode
 
-// getAll builds an id7 getall query: id7{ id4{id21,id23 scope,id29 flag,
-// [id30 selector],id31,id27=0}, id22 nonce, id21 seq }. It asks the device to
-// enumerate its objects in scope.
+// getAll builds an id7 query mirroring the device's own resync: id7{ id4{id21
+// seq, id23 scope, id29 flag, [id30 selector, id31], id27=0}, id22 nonce, id21
+// seq }. With no selector it is byte-shaped exactly like the device's resync
+// (which makes the peer push its objects), so the hope is that the controller
+// sending it makes the device dump. seq is a 2-byte session counter value.
 func getAll(scope string, flag byte, selector []byte) []byte {
 	q := m3.New().
-		Put(idSeq, []byte{0x01}).
+		Put(idSeq, []byte{0x01, 0x01}).
 		PutBytes(idScope, []byte(scope)).
 		Put(idDevFl, []byte{flag})
 	if len(selector) > 0 {
-		q.PutBytes(30, selector)
+		q.PutBytes(30, selector).PutBytes(31, nil)
 	}
-	q.PutBytes(31, nil).PutU32(idStatus, 0)
-	return m3.New().PutNested(idResync, q).PutBytes(idNonce, randBytes(nonceSize)).Put(idSeq, []byte{0x02}).Encode()
+	q.PutU32(idStatus, 0)
+	return m3.New().PutNested(idResync, q).PutBytes(idNonce, randBytes(nonceSize)).Put(idSeq, []byte{0x02, 0x01}).Encode()
 }
 
 // readObject logs a device-reported object (the reading path): its handle, flag,
@@ -339,7 +348,7 @@ func mustHex(s string) []byte {
 }
 
 func serverHello() []byte {
-	token := append(append([]byte(nil), helloMagic...), randBytes(8)...)
+	token := append(append([]byte(nil), helloMagic...), helloToken...)
 	return m3.New().PutBytes(idHello, token).Encode()
 }
 
