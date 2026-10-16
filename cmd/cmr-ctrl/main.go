@@ -108,13 +108,14 @@ func main() {
 type conn struct {
 	tc       *tls.Conn
 	peer     string
-	discSeq []byte // last discovery/resync outer id21 (echoed back in verAck)
+	in      *m3.StreamDecoder // continuous decoder for the device->controller stream
+	discSeq []byte            // last discovery/resync outer id21 (echoed back in verAck)
 	paired  bool
 }
 
 func handle(tc *tls.Conn, idle time.Duration) {
 	defer tc.Close()
-	c := &conn{tc: tc, peer: tc.RemoteAddr().String()}
+	c := &conn{tc: tc, peer: tc.RemoteAddr().String(), in: m3.NewStreamDecoder()}
 	log.Printf("--- connection from %s ---", c.peer)
 	if err := tc.Handshake(); err != nil {
 		log.Printf("[%s] handshake failed: %v", c.peer, err)
@@ -130,6 +131,9 @@ func handle(tc *tls.Conn, idle time.Duration) {
 		tcp.SetKeepAlivePeriod(25 * time.Second)
 	}
 
+	// The device->controller direction is a single continuous m3 field stream
+	// (the delta base carries across TLS reads), so decode it with a running
+	// StreamDecoder and process one top-level field at a time.
 	buf := make([]byte, 16384)
 	for {
 		if idle > 0 {
@@ -139,18 +143,18 @@ func handle(tc *tls.Conn, idle time.Duration) {
 		}
 		n, err := tc.Read(buf)
 		if n > 0 {
-			frame := append([]byte(nil), buf[:n]...)
-			msg, derr := m3.Decode(frame)
-			if derr != nil || len(msg.Fields) == 0 {
-				log.Printf("[%s] C->S %d bytes (undecodable: %v)\n%s", c.peer, n, derr, hexdump(frame))
-			} else {
-				log.Printf("[%s] C->S %d bytes: %s", c.peer, n, summary(msg))
-				if verbose {
-					fmt.Print(m3.Dump(frame, 6))
+			c.in.Feed(buf[:n])
+			for {
+				f, ok := c.in.Next()
+				if !ok {
+					break
 				}
-				for _, out := range c.step(msg) {
-					om, _ := m3.Decode(out)
-					log.Printf("[%s] S->C %d bytes: %s", c.peer, len(out), summary(om))
+				log.Printf("[%s] C->S id%d (%d bytes)", c.peer, f.ID, len(f.Value))
+				if verbose {
+					fmt.Printf("  id=%d len=%d %x\n%s", f.ID, len(f.Value), f.Value, m3.Dump(f.Value, 6))
+				}
+				for _, out := range c.step(f) {
+					log.Printf("[%s] S->C %d bytes: %s", c.peer, len(out), summary(firstDecode(out)))
 					if _, werr := tc.Write(out); werr != nil {
 						log.Printf("[%s] write failed: %v", c.peer, werr)
 						return
@@ -159,15 +163,19 @@ func handle(tc *tls.Conn, idle time.Duration) {
 			}
 		}
 		if err != nil {
-			log.Printf("[%s] read ended: %v", c.peer, err)
+			log.Printf("[%s] read ended: %v (%d bytes buffered)", c.peer, err, c.in.Buffered())
 			return
 		}
 	}
 }
 
-// step maps one decoded client frame to the controller's reply frames.
-func (c *conn) step(msg *m3.Message) [][]byte {
-	f := msg.Fields[0]
+func firstDecode(b []byte) *m3.Message {
+	m, _ := m3.Decode(b)
+	return m
+}
+
+// step maps one top-level client field to the controller's reply frames.
+func (c *conn) step(f m3.Field) [][]byte {
 	switch f.ID {
 	case idHello: // C hello -> S hello
 		return [][]byte{serverHello()}
@@ -205,12 +213,13 @@ func (c *conn) step(msg *m3.Message) [][]byte {
 		return [][]byte{discAck(0x15)}
 
 	case idDesc: // id0: device descriptor, config object, or an error report
-		if b, ok := msg.GetBytes(idStatus); ok && len(b) == 1 && b[0] != 0 {
-			log.Printf("[%s]   client reports status=%#x (%q)", c.peer, b[0], strField(msg, 28))
-		}
-		if body, ok := msg.GetBytes(idDesc); ok {
-			if inner, _ := m3.Decode(body); cmr.IsDescriptor(inner) {
-				if d, err := cmr.ParseDescriptor(body); err == nil {
+		body, _ := m3.Decode(f.Value)
+		if body != nil {
+			if b, ok := body.GetBytes(idStatus); ok && len(b) == 1 && b[0] != 0 {
+				log.Printf("[%s]   client reports status=%#x (%q)", c.peer, b[0], strField(body, 28))
+			}
+			if cmr.IsDescriptor(body) {
+				if d, err := cmr.ParseDescriptor(f.Value); err == nil {
 					log.Printf("[%s]   READ %s", c.peer, d)
 				}
 			}
@@ -341,17 +350,6 @@ func strField(m *m3.Message, id uint32) string {
 	return ""
 }
 
-func hexdump(b []byte) string {
-	var out string
-	for i := 0; i < len(b); i += 16 {
-		end := i + 16
-		if end > len(b) {
-			end = len(b)
-		}
-		out += "  " + hex.EncodeToString(b[i:end]) + "\n"
-	}
-	return out
-}
 
 func must(err error) {
 	if err != nil {
