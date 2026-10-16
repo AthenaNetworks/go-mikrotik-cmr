@@ -47,6 +47,8 @@ var (
 	enumScope string
 	enumFlag  uint
 	enumSel   string
+	pushFile  string
+	pushBlob  []byte
 )
 
 // CMR control-channel constants recovered from the live protocol.
@@ -89,7 +91,14 @@ func main() {
 	flag.StringVar(&enumScope, "enum", "", "after SUCCESS, send an id7 getall for this scope to enumerate the device's objects (e.g. com.mikrotik.cmr)")
 	flag.UintVar(&enumFlag, "enumflag", 0x18, "id29 flag byte for the getall query")
 	flag.StringVar(&enumSel, "enumsel", "", "hex id30 selector for the getall query (empty = none)")
+	flag.StringVar(&pushFile, "pushfile", "", "path to a hex blob of controller object-push bytes to send after a device resync (reading experiment: triggers the device to dump its objects)")
 	flag.Parse()
+	if pushFile != "" {
+		b, err := os.ReadFile(pushFile)
+		must(err)
+		pushBlob = mustHex(strings.TrimSpace(string(b)))
+		log.Printf("loaded push blob: %d bytes", len(pushBlob))
+	}
 
 	cert := identity(*keyfile)
 	cfg := &tls.Config{
@@ -218,7 +227,7 @@ func (c *conn) step(f m3.Field) [][]byte {
 		out := [][]byte{verAck(c.discSeq, 0x01)}
 		switch {
 		case probe:
-			out = append(out, successAndRows()) // SUCCESS + id9 get-requests
+			out = append(out, successAndRowsFresh()) // SUCCESS + id9 rows (fresh-capture flag/handles)
 		default:
 			out = append(out, successFrame())
 		}
@@ -236,8 +245,15 @@ func (c *conn) step(f m3.Field) [][]byte {
 			}
 		}
 		if f.ID == idResync {
-			// a resync (id7) wants a fresh verAck (status 0x00); keep the channel alive
-			return [][]byte{verAck(c.discSeq, 0x00)}
+			// A resync (id7) is the device asking to reconcile a scope. Ack it; then,
+			// if we have a controller object-push blob, send it — the device dumps its
+			// own objects (the read) as reciprocation to the controller's push.
+			out := [][]byte{verAck(c.discSeq, 0x00)}
+			if len(pushBlob) > 0 {
+				out = append(out, pushBlob)
+				log.Printf("[%s]   -> replaying %d-byte object push after resync", c.peer, len(pushBlob))
+			}
+			return out
 		}
 		return [][]byte{discAck(0x15)}
 
@@ -369,6 +385,18 @@ func successAndRows() []byte {
 		PutBytes(idSeq, []byte{0x14, 0, 0, 0, 0, 0, 0, 0x04})
 	r2 := m3.New().PutBytes(idBoard2, boardName).PutBytes(idDevFl, []byte{0x49}).PutBytes(idDevIx, []byte{0x05}).
 		PutBytes(idSeq, []byte{0x15, 0, 0, 0, 0, 0, 0, 0x04})
+	return m3.New().PutNested(idSucc, successInner()).PutNested(idDev, r1).PutNested(idDev, r2).Encode()
+}
+
+// successAndRowsFresh mirrors the clean fresh-sync capture's SUCCESS+rows: flag
+// 0x4b and handles 88 33../89 33.. (vs the old capture's 0x49 / 14../15..). It
+// tests whether a freshly paired device accepts controller-chosen handles
+// (returns its descriptor) or requires generation-matched ones.
+func successAndRowsFresh() []byte {
+	r1 := m3.New().PutBytes(idDevFl, []byte{0x4b}).PutBytes(idDevIx, []byte{0x01}).
+		PutBytes(idSeq, []byte{0x88, 0x33, 0, 0, 0, 0, 0, 0x04})
+	r2 := m3.New().PutBytes(idBoard2, boardName).PutBytes(idDevFl, []byte{0x4b}).PutBytes(idDevIx, []byte{0x05}).
+		PutBytes(idSeq, []byte{0x89, 0x33, 0, 0, 0, 0, 0, 0x04})
 	return m3.New().PutNested(idSucc, successInner()).PutNested(idDev, r1).PutNested(idDev, r2).Encode()
 }
 
