@@ -313,10 +313,10 @@ func (c *conn) readObject(f m3.Field, body *m3.Message) {
 	val, _ := body.GetBytes(75)
 	log.Printf("[%s]   READ obj id%d handle=%x flag=%x idx=%x", c.peer, f.ID, handle, flagb, idxb)
 	if len(key) > 0 {
-		log.Printf("[%s]       key: %s", c.peer, fmtChunks(key))
+		log.Printf("[%s]       key: %s", c.peer, cmr.ParseObject(key))
 	}
 	if len(val) > 0 {
-		log.Printf("[%s]       val: %s", c.peer, fmtChunks(val))
+		log.Printf("[%s]       val: %s", c.peer, cmr.ParseObject(val))
 	}
 }
 
