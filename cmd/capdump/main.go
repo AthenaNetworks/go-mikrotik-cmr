@@ -181,10 +181,15 @@ func main() {
 	idFilter := flag.Int("id", -1, "only frames whose first top-level field id equals this")
 	maxDepth := flag.Int("depth", 5, "max recursion depth")
 	stream := flag.String("stream", "", "concatenate all frames of a direction (C or S) and decode as ONE continuous field stream (running base)")
+	timeline := flag.Bool("timeline", false, "decode in time order with a separate running base per direction (correct framing AND ordering)")
 	flag.Parse()
 
 	if *stream != "" {
 		runStream(*stream)
+		return
+	}
+	if *timeline {
+		runTimeline()
 		return
 	}
 
@@ -282,4 +287,65 @@ func runStream(which string) {
 	}
 	fmt.Printf("# %s stream: %d bytes\n", want, len(raw))
 	streamDecode(raw)
+}
+
+// runTimeline decodes the log in time order, feeding each frame's bytes to a
+// per-direction StreamDecoder so framing is correct (running base per direction)
+// and ordering is preserved — the right view for choreography.
+func runTimeline() {
+	sc := bufio.NewScanner(os.Stdin)
+	sc.Buffer(make([]byte, 1<<20), 1<<20)
+	decC, decS := m3.NewStreamDecoder(), m3.NewStreamDecoder()
+	var dir string
+	var raw []byte
+	n := 0
+	flush := func() {
+		if dir == "" {
+			return
+		}
+		d, dec := "C->S", decC
+		if dir == "S" {
+			d, dec = "S->C", decS
+		}
+		dec.Feed(raw)
+		raw = nil
+		for {
+			f, ok := dec.Next()
+			if !ok {
+				break
+			}
+			n++
+			scope := ""
+			if sub, e := m3.Decode(f.Value); e == nil && sub != nil {
+				if b, ok := sub.GetBytes(23); ok && len(b) > 2 {
+					scope = " scope=" + string(b)
+				}
+				if _, ok := sub.GetBytes(74); ok {
+					scope += " [OBJECT]"
+				}
+				if b, ok := sub.GetBytes(27); ok && len(b) == 1 && b[0] != 0 {
+					scope += fmt.Sprintf(" st=%#x", b[0])
+				}
+			}
+			fmt.Printf("%5d %s id=%-3d len=%-4d%s\n", n, d, f.ID, len(f.Value), scope)
+		}
+	}
+	for sc.Scan() {
+		line := sc.Text()
+		if m := frameHdr.FindStringSubmatch(line); m != nil {
+			flush()
+			dir = "C"
+			if strings.HasPrefix(m[1], "controller") {
+				dir = "S"
+			}
+			continue
+		}
+		if dir != "" && hexRow.MatchString(line) {
+			b, err := hex.DecodeString(strings.ReplaceAll(strings.TrimSpace(line), " ", ""))
+			if err == nil {
+				raw = append(raw, b...)
+			}
+		}
+	}
+	flush()
 }

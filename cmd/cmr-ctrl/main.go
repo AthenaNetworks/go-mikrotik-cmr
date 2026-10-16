@@ -33,6 +33,7 @@ import (
 	"math/big"
 	"net"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/athenanetworks/cmr-server/pkg/cmr"
@@ -41,8 +42,11 @@ import (
 
 // runtime flags (set in main)
 var (
-	verbose bool
-	probe   bool
+	verbose   bool
+	probe     bool
+	enumScope string
+	enumFlag  uint
+	enumSel   string
 )
 
 // CMR control-channel constants recovered from the live protocol.
@@ -82,6 +86,9 @@ func main() {
 	idle := flag.Duration("idle", 0, "per-read idle timeout before closing a connection (0 = never, hold open)")
 	flag.BoolVar(&verbose, "v", false, "log a full recursive decode of every frame")
 	flag.BoolVar(&probe, "probe", false, "after SUCCESS, send id9 get-requests to elicit the device's objects (reading experiment)")
+	flag.StringVar(&enumScope, "enum", "", "after SUCCESS, send an id7 getall for this scope to enumerate the device's objects (e.g. com.mikrotik.cmr)")
+	flag.UintVar(&enumFlag, "enumflag", 0x18, "id29 flag byte for the getall query")
+	flag.StringVar(&enumSel, "enumsel", "", "hex id30 selector for the getall query (empty = none)")
 	flag.Parse()
 
 	cert := identity(*keyfile)
@@ -176,28 +183,50 @@ func firstDecode(b []byte) *m3.Message {
 
 // step maps one top-level client field to the controller's reply frames.
 func (c *conn) step(f m3.Field) [][]byte {
+	// Object-bearing fields (id0/id1/id9 whose body carries an id74 key) are the
+	// device REPORTING state, not control frames — route them to the reader.
+	if f.ID == idDesc || f.ID == idVer || f.ID == idDev {
+		if body, _ := m3.Decode(f.Value); body != nil {
+			if _, ok := body.GetBytes(74); ok {
+				c.readObject(f, body)
+				return nil
+			}
+		}
+	}
 	switch f.ID {
 	case idHello: // C hello -> S hello
 		return [][]byte{serverHello()}
 
-	case idVer: // id1: either the version (has id25) or the post-discovery nonce/seq
+	case idVer: // id1: version (has id25), the post-discovery nonce/seq, or an ack
 		inner, _ := m3.Decode(f.Value)
 		if inner != nil {
 			if _, ok := inner.GetBytes(idBuildV); ok {
 				return [][]byte{serverVersion()} // C version -> S version
 			}
 		}
-		// post-discovery id1 -> verAck, then id10 SUCCESS (promotion to "paired").
-		// NB: in normal operation do NOT send fabricated id9 device-table rows
-		// here; the device replies id0{0x83 "not found"} to rows referencing
-		// devices it can't resolve, then drops the session. SUCCESS alone pairs.
-		// With -probe we deliberately send the capture's id9 get-requests to see
-		// what objects the device returns (the reading experiment).
-		c.paired = true
-		if probe {
-			return [][]byte{verAck(c.discSeq, 0x01), successAndRows()} // SUCCESS + id9 get-requests
+		if c.paired {
+			// Already paired: a bare id1{nonce,seq} is a control ack / keepalive
+			// (e.g. the device acking our getall). Absorb it — do NOT re-run the
+			// SUCCESS path, or every ack would re-pair and storm the channel.
+			return nil
 		}
-		return [][]byte{verAck(c.discSeq, 0x01), successFrame()}
+		// First post-discovery id1 -> verAck, then id10 SUCCESS (promotion to
+		// "paired"). NB: in normal operation do NOT send fabricated id9
+		// device-table rows here; the device replies id0{0x83 "not found"} and
+		// drops the session. SUCCESS alone pairs. -probe/-enum are experiments.
+		c.paired = true
+		out := [][]byte{verAck(c.discSeq, 0x01)}
+		switch {
+		case probe:
+			out = append(out, successAndRows()) // SUCCESS + id9 get-requests
+		default:
+			out = append(out, successFrame())
+		}
+		if enumScope != "" {
+			out = append(out, getAll(enumScope, byte(enumFlag), mustHex(enumSel)))
+			log.Printf("[%s]   -> getall scope=%q flag=%#x sel=%dB", c.peer, enumScope, enumFlag, len(mustHex(enumSel)))
+		}
+		return out
 
 	case idDisc, idResync: // C discovery/resync -> S ack (remember the seq for verAck)
 		// id22/id21 live inside the id6/id7 nested value, not at the top level.
@@ -229,6 +258,68 @@ func (c *conn) step(f m3.Field) [][]byte {
 	default:
 		return nil
 	}
+}
+
+const idQuery = 4 // query body inside a discovery/resync/getall opcode
+
+// getAll builds an id7 getall query: id7{ id4{id21,id23 scope,id29 flag,
+// [id30 selector],id31,id27=0}, id22 nonce, id21 seq }. It asks the device to
+// enumerate its objects in scope.
+func getAll(scope string, flag byte, selector []byte) []byte {
+	q := m3.New().
+		Put(idSeq, []byte{0x01}).
+		PutBytes(idScope, []byte(scope)).
+		Put(idDevFl, []byte{flag})
+	if len(selector) > 0 {
+		q.PutBytes(30, selector)
+	}
+	q.PutBytes(31, nil).PutU32(idStatus, 0)
+	return m3.New().PutNested(idResync, q).PutBytes(idNonce, randBytes(nonceSize)).Put(idSeq, []byte{0x02}).Encode()
+}
+
+// readObject logs a device-reported object (the reading path): its handle, flag,
+// index, and the key/value as their raw chunk lists (semantic decoding of the
+// typed attributes is future work).
+func (c *conn) readObject(f m3.Field, body *m3.Message) {
+	handle, _ := body.GetBytes(idSeq)
+	flagb, _ := body.GetBytes(idDevFl)
+	idxb, _ := body.GetBytes(idDevIx)
+	key, _ := body.GetBytes(74)
+	val, _ := body.GetBytes(75)
+	log.Printf("[%s]   READ obj id%d handle=%x flag=%x idx=%x", c.peer, f.ID, handle, flagb, idxb)
+	if len(key) > 0 {
+		log.Printf("[%s]       key: %s", c.peer, fmtChunks(key))
+	}
+	if len(val) > 0 {
+		log.Printf("[%s]       val: %s", c.peer, fmtChunks(val))
+	}
+}
+
+// fmtChunks splits a typed key/value blob into its m3 chunks and renders them as
+// space-separated hex, the structural view of the nv attribute encoding.
+func fmtChunks(b []byte) string {
+	var parts []string
+	for len(b) > 0 {
+		d, n, err := m3.FirstChunk(b)
+		if err != nil || n == 0 {
+			parts = append(parts, "+"+hex.EncodeToString(b))
+			break
+		}
+		parts = append(parts, hex.EncodeToString(d))
+		b = b[n:]
+	}
+	return strings.Join(parts, " ")
+}
+
+func mustHex(s string) []byte {
+	if s == "" {
+		return nil
+	}
+	b, err := hex.DecodeString(s)
+	if err != nil {
+		log.Fatalf("bad hex %q: %v", s, err)
+	}
+	return b
 }
 
 func serverHello() []byte {
