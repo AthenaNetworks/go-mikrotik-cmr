@@ -1,96 +1,110 @@
-# cmr-server
+# go-mikrotik-cmr
 
-A standalone, embeddable **CMR controller** written in Go.
+A clean-room, pure-Go implementation of the controller side of MikroTik's **CMR**
+protocol — the centralized Wi-Fi/mesh controller that ships in RouterOS 7.26+.
+A stock, unmodified MikroTik device pairs and connects to this controller with
+no RouterOS or Nova controller in the path.
 
-CMR ("CMR server") is the centralized Wi-Fi/mesh network controller that ships
-as a package in MikroTik RouterOS 7.26+. It manages a fleet of devices
-(topology, Wi-Fi radios/networks, VLANs, coordinated firmware upgrades) and
-enrolls them with a **PKEX** handshake (the Public Key Exchange from Wi-Fi
-DPP / Easy Connect) over **NIST P-256**.
+The protocol was reverse-engineered from the RouterOS 7.26 binaries (`figman`,
+`ssld`, `libumsg.so`) and validated live against a RouterOS 7.26 CHR acting as
+the device. There is no affiliation with MikroTik; this is an interoperability
+and research project.
 
-This project is a **clean-room reimplementation of the controller side**,
-derived from static analysis (Ghidra) of the stock `cmr` binary. It has no
-RouterOS/Nova dependency: it runs as a single Go binary (or embeds as a
-library) and exposes hooks so other projects can plug in their own storage,
-policy, transport, and crypto.
+## Status
 
-> **Status — read this.** The protocol *structure* (frame types, state machine,
-> enrollment flow, data model) is recovered from the binary and implemented
-> here. The exact DPP-PKEX key schedule and the `m3` wire bytes are **not yet
-> byte-verified**, because the EC math and message serialization live in
-> RouterOS shared libraries, not in `cmr`. The bundled crypto suite and UDP
-> transport therefore interoperate **with this project's own client**, not
-> (yet) with real MikroTik devices. See [docs/PROTOCOL.md](docs/PROTOCOL.md)
-> for exactly what is verified vs. pending. This is an interoperability /
-> research project; it is not affiliated with or endorsed by MikroTik.
+| Capability | State |
+|---|---|
+| Device pairs + connects (open pairing, `pairing-requirement=none`) | **Working, verified live** — device reports `status: paired,connected` |
+| TLS 1.2 control transport (ECDHE-ECDSA-AES128-GCM, Ed25519 identities) | Working |
+| `nv`/`m3` wire codec | Byte-exact vs. captured frames (unit tests) |
+| Control-plane reads decoded (device identity, board, version, interfaces, MACs) | Decoder verified against live captures |
+| Password pairing (the PKEX PAKE) | Not implemented — runs in `ssld`, inlined/Montgomery-form; open pairing avoids it |
+| Full object-sync enumeration driven live | Not yet — see [Protocol notes](#protocol-notes) |
+
+The controller currently implements the **open pairing** path. Password (PKEX)
+pairing is a custom, TLS-channel-bound EC+HMAC PAKE inside `ssld` and is out of
+scope; open pairing skips it entirely (the controller sends `id10` SUCCESS with
+status 0, which promotes the device to `paired`).
+
+## How it works
+
+```
+device  ──TLS 1.2 (cipher 0xc02b, self-signed Ed25519)──▶  cmr-ctrl :54321
+        ◀── nv/m3 control stream (continuous per-direction field stream) ──▶
+```
+
+1. **Transport.** TLS 1.2 on tcp/54321. MikroTik's client certificate encodes an
+   empty `signatureAlgorithm` OID that `crypto/x509` rejects and that cannot be
+   rewritten on the wire without breaking the Finished MAC, so the server does
+   not request a client cert at the TLS layer; trust is the app-layer pinned
+   fingerprint.
+2. **Framing.** Each direction is a single continuous `m3` field stream — the
+   field-tag delta base carries across the whole direction and TLS writes chunk
+   it arbitrarily (`pkg/m3.StreamDecoder`). This is the key to decoding anything
+   past the bring-up.
+3. **Bring-up** (strictly alternating): `hello → version → discovery → verAck +
+   id10 SUCCESS`. The device is then paired and holds the connection open.
+4. **Management plane.** The `nv` object-sync protocol (`libumsg.so`): scoped,
+   handle-addressed objects (`pkg/cmr.ParseObject` decodes them into identity,
+   board, version, interfaces and MACs).
+
+See [docs/OPEN_PAIRING.md](docs/OPEN_PAIRING.md) and
+[docs/PROTOCOL.md](docs/PROTOCOL.md) for frame-level detail.
 
 ## Layout
 
 ```
-cmd/cmr-server/   daemon: UDP transport + controller + optional HTTP status
-pkg/pkex/         discovery + 4-message PKEX state machine (client & server)
-pkg/m3/           typed-TLV message codec (structure of MikroTik m3::message)
-pkg/model/        managed objects (dev, wifi, vlan, layout, upgrade...) + Store
-pkg/transport/    Transport interface + reference UDP transport
-pkg/server/       Server (controller) + Enroller (device side) + Hooks
-examples/extend/  embedding example: custom hooks + store.Watch
-docs/PROTOCOL.md  reverse-engineered protocol notes (provenance, open items)
+cmd/cmr-ctrl/    the controller a real device pairs+connects to (primary)
+pkg/m3/          byte-exact nv/m3 codec + continuous StreamDecoder
+pkg/cmr/         control-plane object model (descriptor + object decoding)
+pkg/mtls/        minimal cert-tolerant TLS 1.2 client
+
+cmd/cmr-mitm/    TLS-terminating control-channel proxy (capture real traffic)
+cmd/capdump/     decode an nv/m3 capture (-timeline, -stream C|S)
+cmd/m3dump/      recursively decode hex m3 frames
+cmd/cmr-dial/    connect to a real controller as a client and decode replies
+cmd/cmr-learn/   earlier controller bring-up probe
+
+docs/            protocol notes
 ```
 
-## Quick start
+`pkg/pkex`, `pkg/pairing`, `pkg/model`, `pkg/transport`, `pkg/server` and
+`cmd/cmr-server` are earlier exploratory code built against a UDP/PKEX model
+that predates the live TLS findings; they do not drive the real protocol and
+are retained only for reference.
+
+## Build
 
 ```sh
 go build ./...
 go test ./...
-
-# run a controller (reference UDP transport)
-go run ./cmd/cmr-server -code my-shared-code -http 127.0.0.1:8080 -v
-
-# in another terminal, watch enrolled devices
-curl -s http://127.0.0.1:8080/devices | jq
-
-# see an end-to-end enrollment in one process (controller + device + hooks)
-go run ./examples/extend
 ```
 
-## Embedding
+## Run
 
-The controller is a library first. Minimal embed:
-
-```go
-store := model.NewStore()
-store.Watch(func(e model.Event) { /* feed your DB / UI / metrics */ })
-
-tr, _ := transport.NewUDP(transport.SynthMAC(1), "0.0.0.0:14700", "")
-srv := server.New(server.Config{
-    Code:     []byte("shared-code"),
-    Identity: "my-controller",
-    Hooks: server.Hooks{
-        Authorize: func(mac net.HardwareAddr) bool { return allowlist[mac.String()] },
-        CodeFor:   func(mac net.HardwareAddr) []byte { return perDeviceCode(mac) },
-        OnEnroll:  func(d *model.Device, r pkex.Result) { provision(d) },
-    },
-}, store, tr)
-srv.Run(ctx)
+```sh
+# stable identity so the device-pinned fingerprint survives restarts
+go run ./cmd/cmr-ctrl -listen 0.0.0.0:54321 -keyfile ctrl.ed25519.seed
 ```
 
-### Extensibility seams
+On the device:
 
-| Seam | Interface | Use it to |
-|------|-----------|-----------|
-| Storage / events | `model.Store.Watch` | mirror managed objects into your own DB/UI |
-| Policy | `server.Hooks` | authorize peers, assign per-peer codes, react to enrollment |
-| Transport | `transport.Transport` | carry frames over 802.11 action frames, raw L2, or UDP |
-| Crypto | `pkex.Suite` | drop in the exact MikroTik key schedule once validated |
+```
+/cmr/client/set enabled=yes controller-addresses=<controller-ip>
+/cmr/client/pair password=x username=admin
+/cmr/client/print          ;# -> status: paired,connected
+```
 
-## Toward real-device interop
+The controller is open-pairing, so the password is ignored; the command still
+requires one. `-v` logs a full recursive decode of every frame; `-idle 0`
+(default) holds idle connections open.
 
-The seam that matters most is `transport.Transport`: real CAP↔controller
-enrollment rides link-layer frames emitted by the wifi stack, not UDP.
-Implement an 802.11 public-action-frame transport, capture a real enrollment,
-then align `pkg/pkex` (key schedule) and `pkg/m3` (wire bytes) to the capture.
-The frame-type map and state machine in `pkg/pkex` already match the binary.
+## Protocol notes
 
-## License
-
-MIT — see [LICENSE](LICENSE).
+Pairing is complete. The remaining work is driving the `nv` object-sync
+enumeration live: object handles are a controller-assigned, per-controller-
+identity mapping, so a brand-new controller holds no mapping and the device
+answers object references with `local not found`. Establishing the mapping
+requires the from-scratch `nv` sync bootstrap (`nv::Handler::cmdGetAll` /
+`subscribe` / `sendAsyncGetall` in `libumsg.so`); the object decoder already
+renders whatever the device returns once that exchange is driven.
