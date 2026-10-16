@@ -329,10 +329,30 @@ Snapshot for REA: `/home/josh/cmr/extract/cmr.snapshot`. The wire bytes to
 match are in `docs/samples/pairing-handshake.txt`; `cmd/cmr-mitm` re-captures a
 live pairing on demand.
 
-**Remaining to implement a controller that enrols a new device:** extract the
-exact `HKPDF` inputs (salt/ikm/info — password, username `admin`, scope
-`com.mikrotik.cmr`, role labels), the AES-SIV associated-data vector, and the
-HMAC confirm transcript from the functions above, then implement the server
-role in Go (`crypto/ecdh` P-256 + `crypto/hmac` + `golang.org/x/crypto/hkdf` +
-an AES-SIV lib) and validate against the lab cli (`/cmr/client/reset`, point at
-our controller, confirm it reaches the controller's device table).
+### Implementation status (`pkg/pairing`)
+
+The mechanical core is implemented and unit-tested:
+
+- **AES-SIV** (RFC 5297) — verified against the RFC 5297 §A.1 and RFC 4493
+  (AES-CMAC) test vectors.
+- **P-256 masked-point PKEX** — the `[32B x][1B parity]` point encoding (with
+  square-root decompression), the `M = X + Qpw` masking / `X = M − Qpw`
+  recovery, ECDH, the HKDF/HMAC key schedule. A self-consistency test runs both
+  roles and confirms they recover each other's ephemeral key and derive the
+  same `Z` and matching confirm tags.
+
+Confirmed from the binary and recorded in `pkg/pairing/pkex.go`:
+`Z = HKPDF(hash=SHA256, ikm=K.x, info=transcript, len=0x20)` (authDeriveZ
+`0x8089794`; `createHash(5)`=SHA-256), with the info assembled from the two
+masked points plus the `code` value (`this+0xb8`).
+
+**Remaining calibration (the one thing not completable from static analysis
+alone):** the exact byte inputs to the three KDF/MAC steps — the password→scalar
+`HKPDF` salt/info (`0x8055a9d`), the `Z` info ordering + the precise `code`
+bytes (`0x808997a`), the HMAC confirm transcript (`0x8089bc6`/`0x8089ee3`), and
+the AES-SIV associated-data (`0x80867c7`). These are assembled at runtime from
+the scope `com.mikrotik.cmr`, the username, and role tags. They converge by
+either disassembly-level reading of the vector assembly or by iterating the
+server against the lab cli (`/cmr/client/reset`, point at our controller, watch
+`auth failed (1..4)` / `wrong pass` narrow down the step) until it reaches the
+controller device table.
