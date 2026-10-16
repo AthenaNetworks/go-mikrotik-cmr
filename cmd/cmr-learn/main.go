@@ -34,6 +34,7 @@ func main() {
 	addr := flag.String("listen", "10.99.0.1:54321", "TLS listen address")
 	mutual := flag.Bool("mutual", false, "request a client cert at TLS layer (fails on MikroTik's empty-OID certs)")
 	reply := flag.String("reply", "mirror", "reply strategy: mirror|mirror-all|serverhello|handshake|none")
+	idle := flag.Duration("idle", 20*time.Second, "per-read idle timeout before closing a connection")
 	flag.Parse()
 
 	cert := identity()
@@ -62,11 +63,11 @@ func main() {
 			log.Printf("accept: %v", err)
 			continue
 		}
-		go handle(c.(*tls.Conn), *reply)
+		go handle(c.(*tls.Conn), *reply, *idle)
 	}
 }
 
-func handle(tc *tls.Conn, reply string) {
+func handle(tc *tls.Conn, reply string, idle time.Duration) {
 	defer tc.Close()
 	peer := tc.RemoteAddr()
 	log.Printf("--- connection from %s ---", peer)
@@ -80,7 +81,7 @@ func handle(tc *tls.Conn, reply string) {
 	buf := make([]byte, 8192)
 	first := true
 	for {
-		tc.SetReadDeadline(time.Now().Add(20 * time.Second))
+		tc.SetReadDeadline(time.Now().Add(idle))
 		n, err := tc.Read(buf)
 		if n > 0 {
 			frame := append([]byte(nil), buf[:n]...)

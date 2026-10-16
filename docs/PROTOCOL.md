@@ -257,3 +257,44 @@ Findings against CHR 7.26beta1 controller (10.99.0.113):
 So a byte-parity **controller** needs: mutual TLS with an Ed25519 identity,
 the 4-exchange bring-up above (bytes now known for both roles), optional
 password pairing for new devices, and then the management plane.
+
+## Password pairing captured in plaintext (2026-10-16)
+
+`/cmr/client/reset` unpairs/stops the client (it is the unpair command — not
+`reset-pairing`/`unpair`, which do not exist). With the client reset, a
+`cmd/cmr-mitm` transparent proxy (TLS-terminate the client with its own
+identity, relay to the real controller via `pkg/mtls` with its own client
+identity, preserving frame boundaries) captured a full `/cmr/client/pair
+password=… username=admin` in plaintext. **The pairing completed through the
+MITM**, which proves the PAKE binds the password + exchanged elements + the
+scope string `com.mikrotik.cmr`, NOT the TLS certificates — so it is
+reproducible by a third party that knows the password.
+
+Sequence after the 4-exchange bring-up (C = client/enrollee, S = controller):
+
+| Dir | m3 | Meaning |
+|-----|----|---------|
+| C→S | `id6{ id4[scope, "password required"], nonce, seq }` | client states scope + pairing mode |
+| S→C | `id10{ id23 "com.mikrotik.cmr", id27=02, id28 "password required", nonce }` | controller pairing offer |
+| C→S | `id0{ device descriptor: id65 build+ver, id66 "x86", id69 "routeros", id67/76 "CHR", id80 112-byte blob, … }` | client device info |
+| C→S | `id11{ id23 scope, id32 = "admin\0" + 33-byte element, seq }` | **pairing request: username + PAKE commit** |
+| C→S | `id7{ id4[scope, 65 02 2d 00], nonce, seq }` | |
+| S→C | `id0{ id32 = 49-byte element, seq }` | **server PAKE response** |
+| C→S | `id4{ id23 scope, id33 = 32-byte value, seq }` | **client confirm** |
+| S→C | `id0{ id33 = 32-byte value, seq }` | **server confirm** |
+| S→C | `id10{ id23 scope, id27=00, nonce }` | **pairing success** (id27: 02=required → 00=ok) |
+| S→C | 1474-byte `id0{…}` and onward | **management plane**: plaintext m3 config push |
+
+Full decoded capture: `docs/samples/pairing-handshake.txt`.
+
+**Post-pairing management is plaintext m3 over the TLS channel** (no additional
+encryption layer) — the PAKE only authenticates the device and pins its cert.
+
+### Open item — the PAKE math
+The element sizes (33-byte client commit, 49-byte server response, 32-byte
+confirms, all SHA-256-shaped) and the `PKEXImpl::{encrypt,decrypt,reveal1,
+reveal2,authDeriveZ,auth1,auth2}` methods in `pkex/pkex.cpp` point to a
+DPP/PKEX-derived password handshake over P-256 (likely AES-GCM-wrapped points
+— 49 = 33-byte point + 16-byte tag). Deriving the exact KDF/confirm inputs from
+the binary + this capture is the remaining work to make our controller pair a
+new device (`cmd/cmr-mitm` + the capture give the ground-truth bytes to match).
