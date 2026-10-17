@@ -1,0 +1,90 @@
+# Talking to a MikroTik controller that doesn't exist yet
+
+RouterOS 7.26 shipped a feature called CMR — a centralized controller for
+Wi-Fi and mesh devices. You point a device at a controller's address, pair it,
+and from then on the controller owns its configuration and sees its state. The
+catch: the controller is also RouterOS. If you want to manage a fleet of
+MikroTik devices from your own software, there's no documented protocol to do
+it. The wire format is undocumented, the pairing handshake is a custom PAKE
+buried in a stripped binary, and the whole thing runs over TLS so you can't
+just watch it go by.
+
+We're building the controller side in Go, clean-room, so a stock unmodified
+MikroTik device pairs and connects to it with no RouterOS controller anywhere
+in the path. This is an interoperability project — no affiliation with
+MikroTik, no modified firmware on the device. Everything below was recovered
+from the shipped 7.26 binaries and validated against a real device in a lab.
+
+## Why bother
+
+If you run MikroTik hardware at any scale, "the controller must also be
+MikroTik" is a constraint, not a feature. A controller you own is a controller
+you can integrate: push config from your own source of truth, read device state
+into your own monitoring, and stop treating the fleet as a pile of individual
+boxes you SSH into. That's the outcome we're after — a controller that pairs,
+reads, and eventually writes, built on a protocol we actually understand rather
+than one we hope stays stable.
+
+## The process
+
+Reverse engineering a live protocol is mostly a loop: capture, decode, form a
+theory, test it against the real thing, repeat. A few of the turns were worth
+the trip.
+
+**Get the bytes.** The control channel is TLS 1.2 on tcp/54321. The device
+presents a client certificate with an empty signature-algorithm OID that every
+sane TLS stack rejects — and you can't rewrite it on the wire without breaking
+the handshake MAC. So the controller simply doesn't ask for a client cert at
+the TLS layer; trust is a pinned fingerprint at the application layer instead.
+With that, a terminating proxy gives us the plaintext.
+
+**Decode the wire format.** Underneath TLS is MikroTik's `m3`/`nv` codec:
+every message is a sequence of fields, each a tag chunk and a value chunk, with
+the tags delta-coded against the previous one. We wrote a byte-exact
+encoder/decoder and unit-tested it against captured frames until it round-trips
+cleanly.
+
+**The framing breakthrough.** The delta coding was the thing that cost the most
+and taught the most. Each *direction* of the connection is one continuous field
+stream — the delta base carries across the entire direction, and the TLS layer
+chops it into records at arbitrary points. Decode each TLS read as its own
+message and the whole burst mis-frames: the enumeration opcode decodes as
+`0xFFFFFFFE` instead of `id7` and nothing downstream makes sense. Decode with a
+running base that survives record boundaries and both directions parse as
+thousands of fields with zero errors. This one fact is the key to everything
+past the handshake.
+
+**Pairing.** There are two paths. Password pairing is a custom
+elliptic-curve-plus-HMAC PAKE that lives inside a different binary; open pairing
+(the controller set to require nothing) skips it entirely — the controller
+sends a success status and the device promotes itself to *paired*. We did open
+pairing first, and a real device now reports `paired, connected` against our Go
+controller, verified repeatedly.
+
+**Reading state.** After pairing, the channel runs an object-sync protocol.
+Both sides exchange structured objects: the device reports its interfaces,
+identity, board, version and MAC addresses as a graph of typed records. Our
+decoder turns a captured sync into a full device inventory — `ether1`, the
+board string `CHR QEMU Standard PC (i440FX + PIIX, 1996)`, the firmware version,
+the MACs — all pulled straight off the wire.
+
+## Where it stands
+
+- Pairing works live, end to end.
+- The wire codec is byte-exact and tested.
+- A captured sync decodes into the complete device inventory, so reading via a
+  passive proxy works today.
+- Driving that read from our *own* controller is the current wall. The device
+  owns the object-handle namespace and derives handles per controller identity,
+  so a brand-new controller can't announce objects with handles it picked
+  itself — the device answers "not found" for the exact handle we sent. We
+  proved this three independent ways. The next step is reversing the handle
+  allocation so we can speak handles the device will accept.
+
+## What "done" looks like
+
+A controller process you can run anywhere that a fleet of stock MikroTik
+devices will pair with, that reads their full state and writes their
+configuration, built on a protocol documented down to the byte. Pairing and
+reading are in hand. The handle allocation is the last thing standing between us
+and driving a live device from software that MikroTik didn't write.
