@@ -139,6 +139,40 @@ objdump), so pinning them is instruction-level work.
 Either way, driving the full mutual sync to the point the device dumps is a
 multi-cycle implementation, not a one-shot.
 
+## Cold-start capture — the epoch mechanism (2026-10-17)
+
+Captured a clean from-scratch sync by MITMing cli↔srv (`cmr-mitm`, fresh proxy
+identity both legs; cli `forget`+repair). srv requires PKEX ("password required"),
+`password=x` is accepted. Capture: `scratchpad/coldstart.log`. **Zero "not
+found"** — srv's `id9` push is fully accepted and the device dumps its `id1`
+state. Decoded with `capdump -timeline -objects`.
+
+Decisive comparison with mitmF (same object *content*, different handles):
+
+| | mitmF | cold-start |
+|---|---|---|
+| srv root handles | `3c 01 ..01` | `90 7a ..04` |
+| device dump handles | `3e 01 ..01` | `94 7a ..04` |
+
+So the 8-byte handle is `INDEX · EPOCH · 00 00 00 00 00 · TYPE`:
+- **EPOCH** is a per-session generation (`01`, `7a`, `4b` across sessions). Both
+  directions share it. It is announced in the **device's descriptor handle** (the
+  `id1` 177-byte descriptor ends `…a9 d8 90 7a 01 00 00 00 00 04`), which
+  `cmr.ParseDescriptor` already extracts.
+- **INDEX** is allocated from a shared space based at the descriptor index (`0x90`
+  here); srv takes `90,91,92…`, the device takes `93,94,95…`, interleaved, no
+  collision.
+- **TYPE** `0x01`/`0x04` (topic/class).
+
+This explains the per-controller/per-session wall exactly: our replay reused the
+stale epoch `01`, so every handle missed the device's current generation →
+"not found". The fix is to read the live epoch from the descriptor and emit our
+object handles with it. Remaining: confirm the epoch is sufficient (push roots
+with the correct epoch and check for acceptance), then replicate srv's object
+*content* with our-session handles + consistent cross-references, and the device
+should dump. srv's object content is in `coldstart.log` (config class `4a00c03f`,
+value sub-objects class `0x7f00015`/`0x7f00009`).
+
 ## Implications for live enumeration
 
 1. A fresh controller must **ADDOBJ** its scope objects (device allocates the
