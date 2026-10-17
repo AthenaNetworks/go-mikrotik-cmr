@@ -85,3 +85,49 @@ transcript ordering, and `BigNum::bin` width. Two ways to close this:
    KVM-speed pairing — needs a musl-i386 build + writing `/etc/ld.so.preload` into
    `srv.qcow2`. Or a surgical binary patch forcing a deterministic ephemeral so the
    existing captures become crackable offline. Both modify the guest image.
+
+## PKEX calibration — status & plan (2026-10-17)
+
+Enumeration requires PKEX (see NV_SYNC_FINDINGS.md): open pairing reaches
+`paired,connected` but the device won't sync. So the PKEX password PAKE is the
+gate, and finishing it unlocks the whole management plane. Structure now pinned
+from the figman decompilation (recorded in `pkg/pairing/pkex.go`):
+
+- **password → scalar s** → `Qpw = s*G`. The "code" `EcPrivateKey` (ctx+0xb8) is
+  built by `FUN_0806f38c` from a scalar copied out of ctx+0x5c (`PKEX::start`
+  `0x806f69e`/`0x806f85e`). The scalar's own derivation (HKPDF of the password)
+  is one hop further upstream — **the last RE gap**.
+- **masking** `M = X + Qpw` via `WCurve::add` (`FUN_0806fe4a`).
+- **Z** = `HKPDF(SHA256, ikm=K.x, salt, info, 0x20)`, `K = ownEphemeral *
+  ecPeerProt` (`authDeriveZ 0x806e57e`). GAP: salt/info contents.
+- **confirm** = `HMAC(key=J.x, SHA256)` over `bin(ctx+0x60)`, `bin(ecPeerProt
+  @0xb0)`, `bin(kProt+4 @0xa0)`; `J = ownScalar(@0x98) * peerPoint(@0x58)`
+  (`reveal1 0x806e820`). GAP: which concrete value each ctx offset holds.
+- **SIV**: config attributes wrapped with AES-SIV under a key from Z
+  (`encrypt 0x806b886` / `decrypt 0x806b974`).
+
+Context-field map (partial): +0x58 peerPoint, +0x60 ?, +0x98 ownScalar, +0xa0
+kProt, +0xb0 ecPeerProt, +0xb8 code(EcPrivateKey built from a password scalar).
+
+### Plan to finish
+
+1. **Pin password→scalar**: decompile the upstream of `PKEX::start` that writes
+   ctx+0x5c (the HKPDF of the password). Ghidra project is analyzed and saved at
+   `scratchpad/gproj` (figman); reuse with
+   `analyzeHeadless scratchpad/gproj figproj -process figman -noanalysis
+   -postScript Decomp.java 0x<addr> -scriptPath scratchpad/gs`.
+2. **Test harness (initiator)**: extend `cmd/cmr-dial` into a PKEX initiator and
+   pair against the live srv controller (10.99.0.113:54321, `password=x`
+   accepted). srv reaching the device table / SUCCESS is the oracle; iterate the
+   KDF labels until it authenticates. cli's `/log print` shows staged
+   `auth failed` to localize which step is wrong.
+3. **Ground truth**: `cmr-mitm` (defaults cli→10.99.0.1→srv) captures plaintext
+   PKEX transcripts (masked points, confirm tags, SIV) for each step.
+4. **Responder**: mirror the calibrated PKEX into `cmd/cmr-ctrl` (responder). The
+   real device then PKEX-authenticates → the nv sync runs → `pkg/cmr` decodes the
+   full dump (object content template in `scratchpad/coldstart.log`).
+
+Scope: a multi-session crypto-RE + implementation effort, not a one-shot. The
+mechanics (P-256 masked-point PKEX, AES-SIV, HKDF/HMAC) are implemented and
+RFC-tested in `pkg/pairing`; what remains is byte-exact label calibration + the
+responder wiring, validated against srv/cli.
