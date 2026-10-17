@@ -164,14 +164,41 @@ So the 8-byte handle is `INDEX · EPOCH · 00 00 00 00 00 · TYPE`:
   collision.
 - **TYPE** `0x01`/`0x04` (topic/class).
 
-This explains the per-controller/per-session wall exactly: our replay reused the
-stale epoch `01`, so every handle missed the device's current generation →
-"not found". The fix is to read the live epoch from the descriptor and emit our
-object handles with it. Remaining: confirm the epoch is sufficient (push roots
-with the correct epoch and check for acceptance), then replicate srv's object
-*content* with our-session handles + consistent cross-references, and the device
-should dump. srv's object content is in `coldstart.log` (config class `4a00c03f`,
-value sub-objects class `0x7f00015`/`0x7f00009`).
+## Decisive: object-sync requires PKEX pairing
+
+Tested the epoch hypothesis live: our open-pairing controller pushed the exact
+cold-start root objects but with a freshly-chosen epoch (`0xAA`). The device
+**rejected** them — `not found` for `90 aa ..04` / `91 aa ..04`, the handles we
+chose. So the controller cannot freely choose the epoch; the device validates it.
+
+Yet srv *does* choose the epoch: in the cold-start, connection-1 carries no `7a`,
+and srv introduces `7a` at its first roots with no prior device-provided value —
+and the device accepts it. The only difference between srv and our controller is
+that **srv completed the PKEX password handshake** and we did open pairing.
+
+Every object sync in every capture (`mitm*.log`, `coldstart.log`) is preceded by
+the PKEX "password required" exchange; there is no capture of a sync without it,
+and our open-paired controller never gets a dump. Conclusion:
+
+> The nv object-sync is gated on PKEX authentication. A device accepts a
+> controller's object ADDs (and its chosen session epoch) only from a
+> PKEX-authenticated controller. Open pairing reaches `paired,connected` but the
+> device will not sync config or dump state to an unauthenticated controller —
+> it answers the controller's objects with `not found`.
+
+(The one untested alternative is a RouterOS controller configured for open
+pairing; srv in this lab is PKEX-only, so it can't disprove the above. But the
+security logic — only an authenticated controller may push config — and the
+uniform evidence make PKEX the real requirement.)
+
+### Consequence for the project
+
+Live enumeration needs the **PKEX password PAKE**, not more object-layer work.
+That is the EC+HMAC handshake already mapped in `FINDINGS.md`, whose KDF/MAC byte
+calibration is the remaining piece (`pkg/pairing` has the mechanics;
+`PKEX::start`/`authDeriveZ`/`reveal1` are decompiled). Once PKEX completes, the
+object decoder (`pkg/cmr`) already reads the full dump, and srv's object content
+in `coldstart.log` is the template for the controller's own config push.
 
 ## Implications for live enumeration
 
