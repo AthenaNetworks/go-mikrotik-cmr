@@ -18,8 +18,9 @@ and research project.
 | TLS 1.2 control transport (ECDHE-ECDSA-AES128-GCM, Ed25519 identities) | Working |
 | `nv`/`m3` wire codec | Byte-exact vs. captured frames (unit tests) |
 | Control-plane reads decoded (device identity, board, version, interfaces, MACs) | Decoder verified against live captures |
+| Full device inventory decoded from a real sync | Working — `capdump -objects` decodes the whole `id1`/`id9` object dump |
 | Password pairing (the PKEX PAKE) | Not implemented — runs in `ssld`, inlined/Montgomery-form; open pairing avoids it |
-| Full object-sync enumeration driven live | Not yet — see [Protocol notes](#protocol-notes) |
+| Object-sync dump driven live by our controller | Blocked — the device derives object handles per controller identity; see [Protocol notes](#protocol-notes) |
 
 The controller currently implements the **open pairing** path. Password (PKEX)
 pairing is a custom, TLS-channel-bound EC+HMAC PAKE inside `ssld` and is out of
@@ -101,10 +102,22 @@ requires one. `-v` logs a full recursive decode of every frame; `-idle 0`
 
 ## Protocol notes
 
-Pairing is complete. The remaining work is driving the `nv` object-sync
-enumeration live: object handles are a controller-assigned, per-controller-
-identity mapping, so a brand-new controller holds no mapping and the device
-answers object references with `local not found`. Establishing the mapping
-requires the from-scratch `nv` sync bootstrap (`nv::Handler::cmdGetAll` /
-`subscribe` / `sendAsyncGetall` in `libumsg.so`); the object decoder already
-renders whatever the device returns once that exchange is driven.
+Pairing is complete and the object decoder is complete: a captured sync decodes
+into the full device inventory (interfaces, identity, vendor, system-id,
+version, board, MACs) via `pkg/cmr.ParseObject` / `capdump -timeline -objects`,
+so passive MITM (`cmd/cmr-mitm`) is a working read path today.
+
+After SUCCESS the plane is a symmetric `nv` getall over two scopes:
+`com.mikrotik.cmr` (the device pulls the controller's config as `id9` rows) and
+`com.mikrotik.cmr.config` (the controller pulls the device's state as `id1`
+rows). See [docs/PROTOCOL.md](docs/PROTOCOL.md#management-plane--nv-object-sync-2026-10-17).
+
+The remaining work is driving that dump from our own controller. The device
+**owns** the object-handle space and derives handles **per controller
+identity**, so a fresh controller cannot announce objects with self-chosen
+handles — it gets `not found` echoing the exact handle it sent, and the device
+will not stream `.config` until the base scope is established with valid objects
+at device-derived handles. Verified live three ways (verbatim replay, bare
+getall, `id11` subscribe). Unblocking it means reversing the handle allocation
+in `libumsg.so` (`nv::Handler::cmdGetAll` / `subscribe` / `sendAsyncGetall` /
+`AsyncReget`) and the figman local-store lookup.

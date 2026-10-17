@@ -18,6 +18,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/athenanetworks/cmr-server/pkg/cmr"
 	"github.com/athenanetworks/cmr-server/pkg/m3"
 )
 
@@ -182,6 +183,12 @@ func main() {
 	maxDepth := flag.Int("depth", 5, "max recursion depth")
 	stream := flag.String("stream", "", "concatenate all frames of a direction (C or S) and decode as ONE continuous field stream (running base)")
 	timeline := flag.Bool("timeline", false, "decode in time order with a separate running base per direction (correct framing AND ordering)")
+	flag.IntVar(&detailLo, "from", -1, "timeline: first frame number to print full hex+nested decode for")
+	flag.IntVar(&detailHi, "to", 1<<30, "timeline: last frame number to print full hex+nested decode for")
+	flag.IntVar(&reemitID, "reemit", -1, "timeline: collect fields with this id (in -redir, within -from..-to) and print them re-encoded as one continuous m3 stream (hex)")
+	flag.StringVar(&reemitDir, "redir", "S", "timeline -reemit direction: C or S")
+	flag.BoolVar(&objects, "objects", false, "timeline: decode each object frame's id74 key / id75 value with pkg/cmr and print its content")
+	flag.StringVar(&objDir, "objdir", "", "timeline -objects: restrict to direction C or S (default both)")
 	flag.Parse()
 
 	if *stream != "" {
@@ -260,6 +267,24 @@ func main() {
 // dirSaved carries the raw direction label across finalize (set at header time).
 var dirSaved string
 
+// detailLo/detailHi bound the timeline frame range printed with full hex+decode.
+var detailLo, detailHi int
+
+// reemit collects fields of a given id/direction and re-encodes them as one
+// continuous m3 stream (for building a valid controller object push).
+var (
+	reemitID  = -1
+	reemitDir = "S"
+	reemitBuf = m3.New()
+	reemitN   = 0
+)
+
+// objects enables decoding each object frame's key/value with pkg/cmr.
+var (
+	objects bool
+	objDir  string
+)
+
 // runStream reads the whole log, concatenates the raw bytes of every frame in
 // the requested direction (in order), and decodes the result as one continuous
 // m3 field stream to test whether the delta base carries across TLS writes.
@@ -327,7 +352,42 @@ func runTimeline() {
 					scope += fmt.Sprintf(" st=%#x", b[0])
 				}
 			}
+			if reemitID >= 0 {
+				lo := detailLo
+				if lo < 0 {
+					lo = 0
+				}
+				if int(f.ID) == reemitID && d[0:1] == reemitDir && n >= lo && n <= detailHi {
+					reemitBuf.Put(f.ID, f.Value)
+					reemitN++
+				}
+				continue
+			}
+			if objects {
+				if objDir == "" || d[0:1] == objDir {
+					if sub, e := m3.Decode(f.Value); e == nil && sub != nil {
+						key, hasKey := sub.GetBytes(74)
+						if hasKey {
+							handle, _ := sub.GetBytes(21)
+							fmt.Printf("%5d %s id=%-2d handle=%x\n", n, d, f.ID, handle)
+							if len(key) > 0 {
+								fmt.Printf("        key: %s\n", cmr.ParseObject(key))
+							}
+							if val, ok := sub.GetBytes(75); ok && len(val) > 0 {
+								fmt.Printf("        val: %s\n", cmr.ParseObject(val))
+							}
+						}
+					}
+				}
+				continue
+			}
 			fmt.Printf("%5d %s id=%-3d len=%-4d%s\n", n, d, f.ID, len(f.Value), scope)
+			if detailLo >= 0 && n >= detailLo && n <= detailHi {
+				fmt.Printf("        hex: %x\n", f.Value)
+				if sub, e := m3.Decode(f.Value); e == nil && sub != nil && len(sub.Fields) > 0 {
+					dump(f.Value, 2, 6)
+				}
+			}
 		}
 	}
 	for sc.Scan() {
@@ -348,4 +408,9 @@ func runTimeline() {
 		}
 	}
 	flush()
+	if reemitID >= 0 {
+		enc := reemitBuf.Encode()
+		fmt.Fprintf(os.Stderr, "# reemit id=%d dir=%s frames=%d -> %d bytes\n", reemitID, reemitDir, reemitN, len(enc))
+		fmt.Printf("%x\n", enc)
+	}
 }

@@ -49,6 +49,8 @@ var (
 	enumSel   string
 	pushFile  string
 	pushBlob  []byte
+	subScope  string
+	subUser   string
 )
 
 // CMR control-channel constants recovered from the live protocol.
@@ -99,6 +101,8 @@ func main() {
 	flag.UintVar(&enumFlag, "enumflag", 0x18, "id29 flag byte for the getall query")
 	flag.StringVar(&enumSel, "enumsel", "", "hex id30 selector for the getall query (empty = none)")
 	flag.StringVar(&pushFile, "pushfile", "", "path to a hex blob of controller object-push bytes to send after a device resync (reading experiment: triggers the device to dump its objects)")
+	flag.StringVar(&subScope, "sub", "", "after SUCCESS, send an id11 subscribe for this scope (e.g. com.mikrotik.cmr.config) to pull the device's object stream")
+	flag.StringVar(&subUser, "subuser", "", "optional id32 username for the id11 subscribe")
 	flag.Parse()
 	if pushFile != "" {
 		b, err := os.ReadFile(pushFile)
@@ -238,9 +242,20 @@ func (c *conn) step(f m3.Field) [][]byte {
 		default:
 			out = append(out, successFrame())
 		}
+		// Advertise the controller's own scope objects (its id9 "roots": the node
+		// + board, flag 0x33, handles ...01). The device needs at least these valid
+		// com.mikrotik.cmr objects before it will reciprocate with its own dump.
+		if len(pushBlob) > 0 {
+			out = append(out, pushBlob)
+			log.Printf("[%s]   -> sent %d-byte controller root push after SUCCESS", c.peer, len(pushBlob))
+		}
 		if enumScope != "" {
 			out = append(out, getAll(enumScope, byte(enumFlag), mustHex(enumSel)))
 			log.Printf("[%s]   -> getall scope=%q flag=%#x sel=%dB", c.peer, enumScope, enumFlag, len(mustHex(enumSel)))
+		}
+		if subScope != "" {
+			out = append(out, subscribe(subScope, subUser))
+			log.Printf("[%s]   -> id11 subscribe scope=%q user=%q", c.peer, subScope, subUser)
 		}
 		return out
 
@@ -252,15 +267,10 @@ func (c *conn) step(f m3.Field) [][]byte {
 			}
 		}
 		if f.ID == idResync {
-			// A resync (id7) is the device asking to reconcile a scope. Ack it; then,
-			// if we have a controller object-push blob, send it — the device dumps its
-			// own objects (the read) as reciprocation to the controller's push.
-			out := [][]byte{verAck(c.discSeq, 0x00)}
-			if len(pushBlob) > 0 {
-				out = append(out, pushBlob)
-				log.Printf("[%s]   -> replaying %d-byte object push after resync", c.peer, len(pushBlob))
-			}
-			return out
+			// A resync (id7) is the device's getall for the controller's scope. The
+			// controller's root objects were already advertised right after SUCCESS,
+			// so just absorb this; answering again would duplicate handles.
+			return nil
 		}
 		return [][]byte{discAck(0x15)}
 
@@ -284,6 +294,20 @@ func (c *conn) step(f m3.Field) [][]byte {
 }
 
 const idQuery = 4 // query body inside a discovery/resync/getall opcode
+const idSub = 11  // subscribe opcode (nv::subscribe): id11{id23 scope, [id32 user], id21 seq}
+
+// subscribe builds an id11 subscribe for a scope: id11{ id23 scope, [id32
+// user\0], id21 seq }. In mitmF the device subscribes to the controller's scope
+// this way; the controller should mirror it for the device's ".config" scope to
+// pull the device's object stream (a pull, with no controller-chosen handles).
+func subscribe(scope, user string) []byte {
+	q := m3.New().PutBytes(idScope, []byte(scope))
+	if user != "" {
+		q.PutBytes(32, append([]byte(user), 0))
+	}
+	q.Put(idSeq, []byte{0x30})
+	return m3.New().PutNested(idSub, q).Encode()
+}
 
 // getAll builds an id7 query mirroring the device's own resync: id7{ id4{id21
 // seq, id23 scope, id29 flag, [id30 selector, id31], id27=0}, id22 nonce, id21

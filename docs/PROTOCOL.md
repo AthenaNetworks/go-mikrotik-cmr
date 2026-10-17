@@ -356,3 +356,78 @@ either disassembly-level reading of the vector assembly or by iterating the
 server against the lab cli (`/cmr/client/reset`, point at our controller, watch
 `auth failed (1..4)` / `wrong pass` narrow down the step) until it reaches the
 controller device table.
+
+## Management plane — nv object sync (2026-10-17)
+
+After SUCCESS the channel runs MikroTik's `nv` object-sync protocol. The
+choreography was recovered byte-for-byte from a real controller↔device sync
+(`scratchpad/mitmF.log`, decode with `capdump -timeline`).
+
+### Opcodes added at this layer
+
+`id9` controller→device object row, `id1` (also) device→controller object row,
+`id11` subscribe (`nv::subscribe`), `id3` event/notification (e.g. `st=0x85`
+"configuration changed"), `id0` descriptor/error.
+
+### Symmetric getall over two scopes
+
+It is a two-way pull over exactly two scope strings:
+
+| Scope | Owner | Pulled by | Answered as |
+|---|---|---|---|
+| `com.mikrotik.cmr` | controller | device (`id7`) | controller `id9` rows |
+| `com.mikrotik.cmr.config` | device | controller (`id7`) | device `id1` rows |
+
+Both streams flow concurrently once paired. A getall is
+
+```
+id7{ id4{ id21 seq, id23 scope, id29 flag, [id30 cursor, id31], id27=0 },
+     id22 nonce, id21 seq }
+```
+
+The reply's `id21` echoes the request's `id21` (a per-exchange request tag, not
+a global counter). An initial getall carries no `id30`; `AsyncReget` pagination
+puts a cursor in `id30` (observed: 37 bytes holding class-id `4a00c03f` and
+handles).
+
+### Object rows
+
+```
+controller→device  id9 { id74 key, [id75 val], id29 flag=0x33, id64 idx=0x04, id21 handle }
+device→controller  id1 { id21 handle, id74 key, [id75 val] }
+```
+
+`id74`/`id75` are flat m3 *chunk* sequences (not nested messages); the first
+chunk is the LE-u32 object class (`aa00803f` runtime state, `4a00c03f`
+config/relations). For config-class rows the `id74` key itself carries the full
+content. The handle is 8 bytes `IDX EP 00 00 00 00 00 TT` — `IDX` a sequential
+index, `EP` an epoch/generation byte, `TT` a topic/type (`0x01` for scope
+objects). `pkg/cmr.ParseObject` decodes a row body into class + strings + MACs;
+`capdump -timeline -objects` renders a whole capture as a device inventory.
+
+### Reading works; driving a live dump does not (yet)
+
+Decoding a captured device dump is complete — against `mitmF.log` the full
+device state decodes (interfaces, identity, vendor, system-id, version, board,
+MACs). Passive MITM (`cmd/cmr-mitm`) is therefore a working read path today.
+
+Driving the dump from our own controller is blocked by handle derivation. The
+device **owns** the handle space and derives handles **per controller
+identity**; a fresh controller cannot announce objects with self-chosen handles.
+Observed live (our `cmd/cmr-ctrl`, fresh identity, `forget`+repair):
+
+- Replaying the real controller's `id9` objects verbatim → the device answers
+  `id1{ id1{id27=0x83,id28="not found"}, id21=<the announced handle> }` for every
+  object, echoing the exact handle we sent. The real sync (`mitmF`) has **zero**
+  "not found": its handles match what the device derived for srv's identity.
+- `id7` getall for `com.mikrotik.cmr.config` → clean ack, no dump (the base
+  `com.mikrotik.cmr` scope is not established).
+- `id11` subscribe for `com.mikrotik.cmr.config` → "not found" (the sub-scope is
+  not independently subscribable cold).
+
+So the device will not stream `.config` until the base scope is established with
+valid controller objects at device-derived handles. Live enumeration requires
+reversing the nv handle allocation in `lib/libumsg.so`
+(`nv::Handler::cmdGetAll` `0x34034`, `subscribe` `0x35e90`, `sendAsyncGetall`
+`0x3c440`, `AsyncReget`) and the figman local-store lookup at `0x806af04`
+("local not found, id=").
