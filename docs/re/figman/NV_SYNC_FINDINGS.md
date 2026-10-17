@@ -74,16 +74,41 @@ nv field ids are `0xff0000 | <small wire id>`:
 `Store::get`-miss errors come back as the `id1{ id1{ id27=0x83, id28="not found" },
 id21=<handle> }` frames we see live, echoing the unresolved handle.
 
-## Open item: exact wire framing of the command
+## Two layers, and where the command lives
 
-Captured messages decode (continuous-base) as a nested outer opcode (id7 getall,
-id9 object, id11 subscribe, id1 reply). Decoded base-0 the getall is
-`{ id4{ id21 reqid, id23 scope, id29 flag, id27 }, id22 nonce, id21 reqid }` with
-no visible id3 — so the command is carried in the m3 message header
-(`m3::MidType` + u32, per figman's `<lambda(m3::MidType,uint32_t,m3::In)>`), which
-our field-only `pkg/m3` folds into the outer field id. Pinning the
-MidType→command map (and whether a valid ADDOBJ must set `0xff0003` explicitly) is
-the one remaining item before we can synthesize a valid create.
+There are two protocols here, which earlier notes conflated:
+
+1. **figman peer wire** (controller↔device, over TLS): messages are m3 frames
+   whose outer opcode is the small field id — id2 hello, id6 discovery, id7
+   getall, id9 object, id10 status, id11 subscribe, id1 reply. The getall is
+   `id7{ id4{ id21 reqid, id23 scope, id29 flag, id27 }, id22 nonce, id21 reqid }`
+   — our `cmr-ctrl` getAll already matches this shape (the wrapper is not the bug).
+2. **nv store commands** (figman↔nova store, internal IPC): the `0xfe00XX`
+   command set. `nv::isCtrl(msg, u32* out)` @ 0x3543a is the extractor — a message
+   is a control/command iff it carries field **`0xff000d` (wire id13)**, whose
+   value is the `0xfe00XX` command. (`m3::MidType` is just the 2-bit m3 tag type
+   via `m3::message::fold`, not the command.)
+
+So on the peer wire the opcode is the outer field id; figman then decides, per
+incoming object, whether to ADD (create pairing, allocate local-id) or SET
+(update existing pairing) in its nv store. Our object pushes resolve to SET of an
+unpaired remote-id → `Store::get` miss → "not found".
+
+## Open item: the cold-start ADD / full-dump trigger
+
+mitmF is a **warm resume** (srv's pairings persisted on the device — config reset
+does not clear `/nova/store/figman`), so srv used SET/cursor-based reget, never a
+cold-start ADD. We have no capture of a true first sync, so the exact wire form
+that makes the device (a) accept the controller's first objects as ADDs and (b)
+stream its own `.config` objects is still unconfirmed. Our getall(`.config`) is
+structurally valid but draws only an ack (no cursor ⇒ nothing to resume; or the
+device awaits a completed mutual sync of `com.mikrotik.cmr` first).
+
+Cleanest unblock: capture a **true cold start** — wipe the device's
+`/nova/store/figman` (mount cli.qcow2 offline, remove the store), boot, and watch
+a fresh sync; a stranger device may ADD its objects proactively. Failing a
+reference controller, drive our own `cmr-ctrl` and iterate on the getall flag /
+an explicit SUBSCRIBE (id13 = `0xfe0011`) against the live device.
 
 ## Implications for live enumeration
 
