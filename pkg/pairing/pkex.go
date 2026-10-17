@@ -163,13 +163,13 @@ func (s *Session) Masked() []byte { return EncodePoint(pointAdd(s.Public, s.qpw)
 // Agree takes the peer's masked point, recovers the peer ephemeral public key,
 // and returns the ECDH shared secret Z.
 //
-// Confirmed from authDeriveZ (0x8089794): Z = HKPDF(hash=SHA256, ikm=K.x,
-// info=transcript, len=0x20), where createHash(5)=SHA256, the K.x bytes are the
-// ikm, and the info vector is assembled (3× the vector-append helper) from two
-// values plus `code` (this+0xb8, the password-derived element). CALIBRATE: the
-// exact order of the two values (the masked points M_i/M_r) and the precise
-// `code` bytes still need confirming; here we approximate info with
-// "cmr pkex z" so the mechanics stay self-consistent.
+// Confirmed byte-level from figman authDeriveZ (0x806e57e): K = ownEphemeral *
+// ecPeerProt (ctx+0xb0, the recovered peer point) via WCurve::mul->toEC; then
+// z = HKPDF(hash=createHash(5)=SHA256, ikm=K.x [BigNum::bin], salt=S, info=I,
+// len=0x20). ctx+0xa0 (kProt) and ctx+0xb8 (code, the password element) are the
+// other live context fields. CALIBRATE: the salt S and info I vectors — their
+// exact contents (which of code/kProt/the masked points, and order) are the
+// remaining bytes; placeholder info "cmr pkex z" keeps the mechanics consistent.
 func (s *Session) Agree(peerMasked []byte) (z []byte, peerPub Point, err error) {
 	m, err := DecodePoint(peerMasked)
 	if err != nil {
@@ -188,9 +188,19 @@ func (s *Session) Agree(peerMasked []byte) (z []byte, peerPub Point, err error) 
 	return z, peerPub, nil
 }
 
-// Confirm computes the HMAC-SHA256 confirmation tag over the two masked points
-// in a fixed order (initiator, responder). CALIBRATE: the exact transcript and
-// key for auth1/auth2 (HMAC sites 0x8089bc6/0x8089ee3) still need matching.
+// Confirm computes the HMAC-SHA256 confirmation tag.
+//
+// Confirmed byte-level from figman reveal1 (0x806e820): J = ownScalar(ctx+0x98) *
+// peerPoint(ctx+0x58) via WCurve::mul->toEC; tag = HMAC(key=J.x [BigNum::bin],
+// hash=SHA256@0x807bcb0) updated with THREE BigNum::bin values, in order:
+//
+//	1. ctx+0x60              (own protocol/masked value)
+//	2. ctx+0xb0 ecPeerProt   (peer ephemeral point)
+//	3. ctx+0xa0 kProt + 4    (own protocol key field)
+//
+// then HMAC::digest. CALIBRATE: the field->Session mapping (which concrete
+// point/scalar each ctx offset holds) is the piece to pin by lab iteration; the
+// current two-masked-point transcript is a placeholder.
 func Confirm(z, initiatorMasked, responderMasked []byte) []byte {
 	mac := hmac.New(sha256.New, z)
 	mac.Write(initiatorMasked)
