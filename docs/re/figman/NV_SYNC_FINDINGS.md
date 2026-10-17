@@ -104,11 +104,40 @@ stream its own `.config` objects is still unconfirmed. Our getall(`.config`) is
 structurally valid but draws only an ack (no cursor ⇒ nothing to resume; or the
 device awaits a completed mutual sync of `com.mikrotik.cmr` first).
 
-Cleanest unblock: capture a **true cold start** — wipe the device's
-`/nova/store/figman` (mount cli.qcow2 offline, remove the store), boot, and watch
-a fresh sync; a stranger device may ADD its objects proactively. Failing a
-reference controller, drive our own `cmr-ctrl` and iterate on the getall flag /
-an explicit SUBSCRIBE (id13 = `0xfe0011`) against the live device.
+Live-confirmed: our getall for `com.mikrotik.cmr.config` draws only a bland ack
+with flag `0x33` AND `0x07` (the device's own getall flag) — the flag is not the
+trigger. The device will not serve `.config` until the `com.mikrotik.cmr` sync is
+completed, which needs a valid ADD from us.
+
+## figman function map (ET_EXEC @ 0x8048000)
+
+- `0x806af04` — emits `"local not found, id="`. The surrounding function resolves
+  an incoming remote-id to a local-id (a lookup returning `-1` at `0x806ae90` →
+  error). This is the resolve/update path; it does NOT create. Our object pushes
+  land here and miss.
+- `0x806def8` — emits `"peer not found, id="` (sibling error).
+- `~0x8057c71` — `Peer::handleAdd`: the CREATE path. Validates local-id
+  (`"invalid local-id"` @0x8057d7b-region, `"id and local-id pair must be unique"`
+  @0x80581bc), reads a bool flag field `0xfe000a`, allocates and inserts the
+  local object + pairing. This is where a first-time object must be routed.
+
+So an incoming object is routed to resolve-or-create by its wire structure/flags;
+ours is treated as resolve (→ miss). The remaining RE step is the exact field
+layout that routes to `handleAdd` and the local-id it allocates. The field ids in
+`handleAdd` are register-loaded (figman internal calls are mis-symbolized by
+objdump), so pinning them is instruction-level work.
+
+## Two ways to finish
+
+1. **Finish the figman RE**: read `Peer::handleAdd` / the object-routing dispatch
+   instruction-by-instruction to get the ADD field layout and local-id
+   allocation, then synthesize a valid ADD in `cmr-ctrl`.
+2. **Cold-start capture**: reconstruct a reference controller (srv as an
+   open-pairing controller, or wipe cli's `/nova/store/figman` for a stranger
+   device) and MITM a true first sync to read the ADD off the wire.
+
+Either way, driving the full mutual sync to the point the device dumps is a
+multi-cycle implementation, not a one-shot.
 
 ## Implications for live enumeration
 
