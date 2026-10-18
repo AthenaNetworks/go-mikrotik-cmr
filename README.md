@@ -20,7 +20,7 @@ and research project.
 | Control-plane reads decoded (device identity, board, version, interfaces, MACs) | Decoder verified against live captures |
 | Full device inventory decoded from a real sync | Working — `capdump -objects` decodes the whole `id1`/`id9` object dump |
 | Password pairing (the PKEX PAKE) | Not implemented — runs in `ssld`, inlined/Montgomery-form; open pairing avoids it |
-| Object-sync dump driven live by our controller | Blocked — the device derives object handles per controller identity; see [Protocol notes](#protocol-notes) |
+| Object-sync dump driven live by **our** controller | **Working, verified live** — a stock device syncs and dumps its full state to `cmd/cmr-ctrl`, 0 not-found, no PKEX; see [Protocol notes](#protocol-notes) |
 
 The controller currently implements the **open pairing** path. Password (PKEX)
 pairing is a custom, TLS-channel-bound EC+HMAC PAKE inside `ssld` and is out of
@@ -112,12 +112,22 @@ After SUCCESS the plane is a symmetric `nv` getall over two scopes:
 `com.mikrotik.cmr.config` (the controller pulls the device's state as `id1`
 rows). See [docs/PROTOCOL.md](docs/PROTOCOL.md#management-plane--nv-object-sync-2026-10-17).
 
-The remaining work is driving that dump from our own controller. The device
-**owns** the object-handle space and derives handles **per controller
-identity**, so a fresh controller cannot announce objects with self-chosen
-handles — it gets `not found` echoing the exact handle it sent, and the device
-will not stream `.config` until the base scope is established with valid objects
-at device-derived handles. Verified live three ways (verbatim replay, bare
-getall, `id11` subscribe). Unblocking it means reversing the handle allocation
-in `libumsg.so` (`nv::Handler::cmdGetAll` / `subscribe` / `sendAsyncGetall` /
-`AsyncReget`) and the figman local-store lookup.
+`cmd/cmr-ctrl` now **drives that dump from our own controller** — a stock device
+syncs and dumps its full state to us, 0 not-found, no PKEX and no RouterOS
+controller in the path. The earlier "the device owns the handle space / derives
+handles per identity" reading was wrong; the real requirements, reversed from a
+RouterOS controller running in open-pairing mode, are three:
+
+1. **Echo the device's query flag.** The device's `id6` discovery / `id7` getall
+   carries an `id29` flag (different each session) inside its nested `id4`. Every
+   object the controller pushes must carry that same flag, or the device answers
+   `not found`. `cmr-ctrl` captures it (`conn.devFlag`) and stamps it in.
+2. **SUCCESS + roots in one stream.** `id10` SUCCESS and the root `id9` objects
+   must be one continuous delta-chained `m3` message, not separate frames.
+3. **Answer the getall.** Reply to the device's `id7` by streaming the
+   controller's config `id9` burst — that triggers the device's own state dump.
+
+Handle index/epoch are controller-chosen and the device adopts them. Run it with
+`-pushfile docs/samples/controller-roots.hex -resyncfile docs/samples/controller-config.hex`
+(a captured valid controller-config scaffold). Synthesising our own configuration
+objects — the write/management direction — is the remaining work.

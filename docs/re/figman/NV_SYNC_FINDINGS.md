@@ -260,3 +260,39 @@ dumps its own state+config as `id1` under the matching handles. No PKEX anywhere
 **Consequence:** live enumeration from our Go controller needs the correct `id9`
 encoding + choreography, NOT the PKEX password PAKE. The PKEX RE
 (FINDINGS.md / pkg/pairing) is shelved as not-on-the-critical-path.
+
+## SOLVED (2026-10-18): cmr-ctrl drives full live enumeration (open pairing)
+
+`cmd/cmr-ctrl` now makes a stock device sync and dump its complete state, with no
+PKEX and no RouterOS controller in the path. Verified live: **0 not-found**, the
+device returns its 178-byte descriptor then dumps ether1 (52:54:00:cc:01:02),
+identity/board/version (MAC 52:54:00:cc:01:01), and the full config/state graph
+(commit 0578315).
+
+The three things our controller was getting wrong, each pinned against srv's
+open-mode sync (`docs/samples/open-mode-sync.log`):
+
+1. **Object flag = the device's query flag.** The device's id6 discovery (and id7
+   getall) carries an `id29` flag inside its nested `id4` query — 0x10/0x14/0x16,
+   different every session ("password required", st=0x02, rides the same query).
+   Every object the controller pushes MUST carry that same `id29` flag. We were
+   sending a stale/fixed flag, so the device could not match our objects to its
+   query and answered every one `not found`. Fix: capture the query flag
+   (`conn.devFlag`) and stamp it into each pushed object.
+
+2. **SUCCESS + roots are one continuous m3 stream.** srv sends `id10` SUCCESS and
+   the two root `id9` objects in a single write, delta-chained (10→9→9). Sending
+   them as separate `Encode()` frames breaks the chain. Fix:
+   `successWithRootsFrame()` builds one message.
+
+3. **Answer the device's id7 getall with the config burst.** srv replies to the
+   device's getall by streaming its `com.mikrotik.cmr` config as an `id9` burst;
+   that is what makes the device reciprocate with its own state dump. We were
+   absorbing the getall. Fix: `-resyncfile` streams the config on id7.
+
+Handle **idx and epoch are controller-chosen and the device adopts them** (it
+echoes the root handle back as its descriptor seq). The earlier "device validates
+our epoch" and "verAck inner seq == epoch" readings were both wrong — symptoms of
+the flag mismatch. The objects pushed are currently srv's captured valid config
+(`docs/samples/controller-{roots,config}.hex`); generating our own config objects
+is the remaining work for the WRITE / management-push direction.

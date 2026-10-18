@@ -72,19 +72,35 @@ the MACs — all pulled straight off the wire.
 
 - Pairing works live, end to end.
 - The wire codec is byte-exact and tested.
-- A captured sync decodes into the complete device inventory, so reading via a
-  passive proxy works today.
-- Driving that read from our *own* controller is the current wall. The device
-  owns the object-handle namespace and derives handles per controller identity,
-  so a brand-new controller can't announce objects with handles it picked
-  itself — the device answers "not found" for the exact handle we sent. We
-  proved this three independent ways. The next step is reversing the handle
-  allocation so we can speak handles the device will accept.
+- A captured sync decodes into the complete device inventory.
+- **Our own controller now drives a live device to sync and dump its full
+  state** — no RouterOS controller in the path, no password handshake. A stock
+  device pairs to our Go process, and we read `ether1` and its MAC, the identity,
+  the board string, the firmware version and the whole config/state graph
+  straight off a device we're driving ourselves.
+
+Getting there meant un-learning a wrong conclusion. For a while the device
+answered "not found" to every object our controller announced, and the evidence
+pointed at the password handshake — every working sync we'd captured happened to
+be password-paired, so we assumed authentication was the gate. It wasn't. We put
+a real RouterOS controller into open-pairing mode and watched it drive a full
+sync with no password at all. That one experiment moved the whole problem: the
+blocker was never auth, it was three details of how a controller must speak.
+
+The device's own query carries a one-byte flag that changes every session, and
+every object the controller pushes has to echo it back — stamp the wrong flag and
+the device simply doesn't recognise the objects as answers to its request. The
+success message and the first objects have to travel as one continuous delta-coded
+stream, not separate frames. And the device only dumps its own state once the
+controller answers the device's "get everything" request by streaming its
+configuration first. Miss any one of these and you get a polite "not found";
+get all three right and the device hands you everything.
 
 ## What "done" looks like
 
-A controller process you can run anywhere that a fleet of stock MikroTik
-devices will pair with, that reads their full state and writes their
-configuration, built on a protocol documented down to the byte. Pairing and
-reading are in hand. The handle allocation is the last thing standing between us
-and driving a live device from software that MikroTik didn't write.
+A controller process you can run anywhere that a fleet of stock MikroTik devices
+will pair with, that reads their full state and writes their configuration, built
+on a protocol documented down to the byte. Pairing and live reading are now in
+hand. What remains is the write direction — synthesising our own configuration
+objects rather than replaying a captured scaffold — so the controller doesn't
+just watch the fleet but configures it.
