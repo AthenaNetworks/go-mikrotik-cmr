@@ -212,3 +212,51 @@ in `coldstart.log` is the template for the controller's own config push.
    (`docs/re/figman/figtrace.c`) retargeted to figman's PLT stubs for
    `getType`, `handleCmd`, `Store::get/set`, and `cmdAddObj` — log command + id
    per message during a live sync.
+
+## CORRECTION (2026-10-18): object-sync does NOT require PKEX
+
+The "requires PKEX" conclusion above is **WRONG** and is superseded here. It was
+inferred because every prior capture happened to be PKEX; the one untested case —
+a real RouterOS controller in OPEN pairing mode — was never run. It has now been
+run and it drives a full sync.
+
+**Experiment:** set srv's controller to open pairing (`/cmr/print` →
+`pairing-requirement: none`), MITM the device↔srv (`cmr-mitm`, defaults
+listen 10.99.0.1:54321 → srv 10.99.0.113:54321), `cli /cmr/client/{forget,set
+controller-addresses=10.99.0.1,pair password=x username=admin}`. Capture:
+`docs/samples/open-mode-sync.log` (decoded `.decoded.txt`).
+
+**Result:** srv (OPEN, no PKEX) drove a complete controller-driven sync — **467
+`id9` ADDOBJ** pushes accepted, device dumped its full state as **`id1`** rows,
+exactly ONE soft reject (`st=0x83 "not talking to you!"` on the board object,
+non-fatal), **zero "not found"**. So an authenticated/PKEX controller is NOT
+required to enumerate; a correctly-behaving open controller works.
+
+**Why our controller failed before — the real diffs.** Byte-compare srv's
+working id9 roots vs our `ctrl_id9_push.hex`:
+
+```
+srv  (WORKS): 49e1 d1e9 10 d2010201 a9d8 2449040000000004   id29=0x10  handle ...TYPE=04  epoch=0x49 idx=0x24
+ours (FAILS): 49e1 d1e9 33 d2010201 a9d8 3a01000000000001   id29=0x33  handle ...TYPE=01  epoch=0x01 idx=0x3a
+```
+
+Two concrete encoding bugs in our push:
+1. **id29 flag**: srv uses **0x10**, we used **0x33**.
+2. **handle TYPE byte**: srv uses **0x04**, we used **0x01**.
+
+The epoch/index are controller-chosen and free (srv picked 0x49/0x24 for this
+fresh pairing; the device adopted them — it echoes handle `24…` back as its own
+descriptor seq, frame 21). So the earlier "device validates/rejects our epoch"
+reading was a symptom of the malformed flag/type, not an epoch rule.
+
+**Working choreography (open mode), from the capture:**
+`id2/id1(ver)/id6(disc)` handshake → device emits `id3 st=0x85 "configuration
+changed"` and reconnects → handshake again → srv `id10 SUCCESS (scope
+com.mikrotik.cmr, st=0)` → srv pushes 2 roots (`id9` handle 24=root/no-key,
+25=board) → device acks + sends `id7` getall(com.mikrotik.cmr) → srv streams its
+config as `id9` (class=config, flag 0x10, type 04, handles 26,27,…) → device
+dumps its own state+config as `id1` under the matching handles. No PKEX anywhere.
+
+**Consequence:** live enumeration from our Go controller needs the correct `id9`
+encoding + choreography, NOT the PKEX password PAKE. The PKEX RE
+(FINDINGS.md / pkg/pairing) is shelved as not-on-the-critical-path.

@@ -1,0 +1,2092 @@
+   25 S->C id=9  handle=2649040000000004
+        key: obj class=config chunks=4
+   26 S->C id=9  handle=2749040000000004
+        key: obj class=config chunks=4
+   27 S->C id=9  handle=2849040000000004
+        key: obj class=config chunks=4 strings=X&
+   28 S->C id=9  handle=2949040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+   29 S->C id=9  handle=2a49040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=17 strings=I#,q",9#
+   30 S->C id=9  handle=2b49040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=30
+   31 S->C id=9  handle=2c49040000000004
+        key: obj class=config chunks=2
+        val: obj class=0x7f00009 chunks=4
+   32 S->C id=9  handle=2d49040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=24
+   33 S->C id=9  handle=2e49040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=11
+   34 S->C id=9  handle=2f49040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=8
+   35 S->C id=9  handle=3049040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=13
+   36 S->C id=9  handle=3149040000000004
+        key: obj class=config chunks=6
+        val: obj class=0x7f00015 chunks=14
+   37 S->C id=9  handle=3249040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=14
+   38 S->C id=9  handle=3349040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=9
+   39 S->C id=9  handle=3449040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=14
+   40 S->C id=9  handle=3549040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+   41 S->C id=9  handle=3649040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=10
+   42 C->S id=1  handle=2849040000000004
+        key: obj class=config chunks=14 strings=X&
+   43 C->S id=1  handle=2d49040000000004
+   44 C->S id=1  handle=3249040000000004
+   45 C->S id=1  handle=2a49040000000004
+        key: obj class=state chunks=2 strings=ether1,ether macs=52:54:00:cc:01:02
+   46 C->S id=1  handle=2b49040000000004
+        key: obj class=state chunks=2
+   47 C->S id=1  handle=2e49040000000004
+        key: obj class=state chunks=2
+   48 C->S id=1  handle=3349040000000004
+        key: obj class=state chunks=2
+   49 C->S id=1  handle=2749040000000004
+        key: obj class=config chunks=8
+   50 C->S id=1  handle=2c49040000000004
+   51 C->S id=1  handle=3149040000000004
+   52 C->S id=1  handle=3049040000000004
+        key: obj class=state chunks=2
+   53 C->S id=1  handle=2949040000000004
+   54 C->S id=1  handle=3449040000000004
+        key: obj class=state chunks=2 strings=CHR,MikroTik,CHR,DiS1woDQxaB,7.26beta1 2026-10-01 13:29:47 macs=52:54:00:cc:01:01
+   55 C->S id=1  handle=2649040000000004
+        key: obj class=config chunks=46 strings=CHR,7.26beta1,CHR,CHR QEMU Standard PC (i440FX + PIIX, 1996)
+   56 C->S id=1  handle=2f49040000000004
+        key: obj class=state chunks=2
+   57 C->S id=1  handle=3549040000000004
+        key: obj class=state chunks=2
+   58 C->S id=1  handle=3649040000000004
+   59 S->C id=9  handle=4749040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+   60 S->C id=9  handle=4849040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=9
+   61 S->C id=9  handle=4949040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=24
+   62 S->C id=9  handle=4a49040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=10
+   63 S->C id=9  handle=4b49040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=17 strings=I#,q",9#
+   64 S->C id=9  handle=4c49040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=14
+   65 S->C id=9  handle=4d49040000000004
+        key: obj class=config chunks=4 strings=X&
+   66 S->C id=9  handle=4e49040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=8
+   67 S->C id=9  handle=4f49040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=14
+   68 S->C id=9  handle=5049040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=11
+   69 S->C id=9  handle=5149040000000004
+        key: obj class=config chunks=4
+   70 S->C id=9  handle=5249040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+   71 S->C id=9  handle=5349040000000004
+        key: obj class=config chunks=6
+        val: obj class=0x7f00015 chunks=14
+   72 S->C id=9  handle=5449040000000004
+        key: obj class=config chunks=4
+   73 S->C id=9  handle=5549040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=30
+   74 S->C id=9  handle=5649040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=13
+   75 C->S id=1  handle=4949040000000004
+   76 C->S id=1  handle=4c49040000000004
+   77 C->S id=1  handle=4d49040000000004
+        key: obj class=config chunks=14 strings=X&
+   78 C->S id=1  handle=4749040000000004
+        key: obj class=state chunks=2
+   79 C->S id=1  handle=4a49040000000004
+   80 C->S id=1  handle=4e49040000000004
+        key: obj class=state chunks=2
+   81 C->S id=1  handle=5349040000000004
+   82 C->S id=1  handle=5449040000000004
+        key: obj class=config chunks=8
+   83 C->S id=1  handle=5649040000000004
+        key: obj class=state chunks=2
+   84 C->S id=1  handle=5249040000000004
+   85 C->S id=1  handle=4849040000000004
+        key: obj class=state chunks=2
+   86 C->S id=1  handle=4b49040000000004
+        key: obj class=state chunks=2 strings=ether1,ether macs=52:54:00:cc:01:02
+   87 C->S id=1  handle=5049040000000004
+        key: obj class=state chunks=2
+   88 C->S id=1  handle=5549040000000004
+        key: obj class=state chunks=2
+   89 C->S id=1  handle=4f49040000000004
+        key: obj class=state chunks=2 strings=CHR,MikroTik,CHR,DiS1woDQxaB,7.26beta1 2026-10-01 13:29:47 macs=52:54:00:cc:01:01
+   90 C->S id=1  handle=5149040000000004
+        key: obj class=config chunks=46 strings=CHR,7.26beta1,CHR,CHR QEMU Standard PC (i440FX + PIIX, 1996)
+   93 S->C id=9  handle=6749040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=13
+   94 C->S id=1  handle=6749040000000004
+        key: obj class=state chunks=2
+   95 S->C id=9  handle=6849040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=30
+   96 S->C id=9  handle=6949040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=11
+   97 S->C id=9  handle=6a49040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=24
+   98 S->C id=9  handle=6b49040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=8
+   99 S->C id=9  handle=6c49040000000004
+        key: obj class=config chunks=6
+        val: obj class=0x7f00015 chunks=14
+  100 S->C id=9  handle=6d49040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=14
+  101 S->C id=9  handle=6e49040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  102 S->C id=9  handle=6f49040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  103 S->C id=9  handle=7049040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=9
+  104 S->C id=9  handle=7149040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=10
+  105 S->C id=9  handle=7249040000000004
+        key: obj class=config chunks=4
+  106 S->C id=9  handle=7349040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=14
+  107 S->C id=9  handle=7449040000000004
+        key: obj class=config chunks=4 strings=X&
+  108 S->C id=9  handle=7549040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=17 strings=I#,q",9#
+  109 S->C id=9  handle=7649040000000004
+        key: obj class=config chunks=4
+  110 C->S id=1  handle=6a49040000000004
+  111 C->S id=1  handle=6d49040000000004
+  112 C->S id=1  handle=7449040000000004
+        key: obj class=config chunks=14 strings=X&
+  113 C->S id=1  handle=6f49040000000004
+        key: obj class=state chunks=2
+  114 C->S id=1  handle=7149040000000004
+  115 C->S id=1  handle=6b49040000000004
+        key: obj class=state chunks=2
+  116 C->S id=1  handle=6c49040000000004
+  117 C->S id=1  handle=7249040000000004
+        key: obj class=config chunks=8
+  118 C->S id=1  handle=6e49040000000004
+  119 C->S id=1  handle=7349040000000004
+        key: obj class=state chunks=2 strings=CHR,MikroTik,CHR,DiS1woDQxaB,7.26beta1 2026-10-01 13:29:47 macs=52:54:00:cc:01:01
+  120 C->S id=1  handle=6849040000000004
+        key: obj class=state chunks=2
+  121 C->S id=1  handle=6949040000000004
+        key: obj class=state chunks=2
+  122 C->S id=1  handle=7049040000000004
+        key: obj class=state chunks=2
+  123 C->S id=1  handle=7549040000000004
+        key: obj class=state chunks=2 strings=ether1,ether macs=52:54:00:cc:01:02
+  124 C->S id=1  handle=7649040000000004
+        key: obj class=config chunks=46 strings=CHR,7.26beta1,CHR,CHR QEMU Standard PC (i440FX + PIIX, 1996)
+  125 S->C id=9  handle=8749040000000004
+        key: obj class=config chunks=4
+  126 S->C id=9  handle=8849040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=17 strings=I#,q",9#
+  127 S->C id=9  handle=8949040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=9
+  128 S->C id=9  handle=8a49040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=11
+  129 S->C id=9  handle=8b49040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  130 S->C id=9  handle=8c49040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=14
+  131 S->C id=9  handle=8d49040000000004
+        key: obj class=config chunks=6
+        val: obj class=0x7f00015 chunks=14
+  132 S->C id=9  handle=8e49040000000004
+        key: obj class=config chunks=4
+  133 S->C id=9  handle=8f49040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=13
+  134 S->C id=9  handle=9049040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=30
+  135 S->C id=9  handle=9149040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=24
+  136 S->C id=9  handle=9249040000000004
+        key: obj class=config chunks=4 strings=X&
+  137 S->C id=9  handle=9349040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  138 S->C id=9  handle=9449040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=14
+  139 S->C id=9  handle=9549040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=8
+  140 S->C id=9  handle=9649040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=10
+  141 C->S id=1  handle=9149040000000004
+  142 C->S id=1  handle=9249040000000004
+        key: obj class=config chunks=14 strings=X&
+  143 C->S id=1  handle=9449040000000004
+  144 C->S id=1  handle=8d49040000000004
+  145 C->S id=1  handle=8e49040000000004
+        key: obj class=config chunks=8
+  146 C->S id=1  handle=8b49040000000004
+  147 C->S id=1  handle=9349040000000004
+        key: obj class=state chunks=2
+  148 C->S id=1  handle=9649040000000004
+  149 C->S id=1  handle=9549040000000004
+        key: obj class=state chunks=2
+  150 C->S id=1  handle=8c49040000000004
+        key: obj class=state chunks=2 strings=CHR,MikroTik,CHR,DiS1woDQxaB,7.26beta1 2026-10-01 13:29:47 macs=52:54:00:cc:01:01
+  151 C->S id=1  handle=8f49040000000004
+        key: obj class=state chunks=2
+  152 C->S id=1  handle=8849040000000004
+        key: obj class=state chunks=2 strings=ether1,ether macs=52:54:00:cc:01:02
+  153 C->S id=1  handle=8949040000000004
+        key: obj class=state chunks=2
+  154 C->S id=1  handle=8a49040000000004
+        key: obj class=state chunks=2
+  155 C->S id=1  handle=9049040000000004
+        key: obj class=state chunks=2
+  156 C->S id=1  handle=8749040000000004
+        key: obj class=config chunks=46 strings=CHR,7.26beta1,CHR,CHR QEMU Standard PC (i440FX + PIIX, 1996)
+  157 S->C id=9  handle=a749040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=10
+  158 S->C id=9  handle=a849040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=8
+  159 S->C id=9  handle=a949040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=30
+  160 S->C id=9  handle=aa49040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=9
+  161 S->C id=9  handle=ab49040000000004
+        key: obj class=config chunks=4
+  162 S->C id=9  handle=ac49040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  163 S->C id=9  handle=ad49040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=14
+  164 S->C id=9  handle=ae49040000000004
+        key: obj class=config chunks=4 strings=X&
+  165 S->C id=9  handle=af49040000000004
+        key: obj class=config chunks=4
+  166 S->C id=9  handle=b049040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=17 strings=I#,q",9#
+  167 S->C id=9  handle=b149040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=11
+  168 S->C id=9  handle=b249040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=14
+  169 C->S id=1  handle=ae49040000000004
+        key: obj class=config chunks=14 strings=X&
+  170 C->S id=1  handle=b249040000000004
+  171 S->C id=9  handle=b349040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=13
+  172 S->C id=9  handle=b449040000000004
+        key: obj class=config chunks=6
+        val: obj class=0x7f00015 chunks=14
+  173 S->C id=9  handle=b549040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  174 S->C id=9  handle=b649040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=24
+  175 C->S id=1  handle=a749040000000004
+  176 C->S id=1  handle=ac49040000000004
+        key: obj class=state chunks=2
+  177 C->S id=1  handle=a849040000000004
+        key: obj class=state chunks=2
+  178 C->S id=1  handle=ab49040000000004
+        key: obj class=config chunks=8
+  179 C->S id=1  handle=ad49040000000004
+        key: obj class=state chunks=2 strings=CHR,MikroTik,CHR,DiS1woDQxaB,7.26beta1 2026-10-01 13:29:47 macs=52:54:00:cc:01:01
+  180 C->S id=1  handle=b649040000000004
+  181 C->S id=1  handle=a949040000000004
+        key: obj class=state chunks=2
+  182 C->S id=1  handle=aa49040000000004
+        key: obj class=state chunks=2
+  183 C->S id=1  handle=b049040000000004
+        key: obj class=state chunks=2 strings=ether1,ether macs=52:54:00:cc:01:02
+  184 C->S id=1  handle=b149040000000004
+        key: obj class=state chunks=2
+  185 C->S id=1  handle=b449040000000004
+  186 C->S id=1  handle=b549040000000004
+  187 C->S id=1  handle=af49040000000004
+        key: obj class=0x3fc0008a chunks=46 strings=CHR QEMU Standard PC (i440FX + PIIX, 1996),CHR,7.26beta1,CHR
+  188 C->S id=1  handle=b349040000000004
+        key: obj class=state chunks=2
+  189 S->C id=9  handle=c749040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=24
+  190 S->C id=9  handle=c849040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  191 S->C id=9  handle=c949040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=17 strings=I#,q",9#
+  192 S->C id=9  handle=ca49040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=30
+  193 S->C id=9  handle=cb49040000000004
+        key: obj class=config chunks=4 strings=X&
+  194 S->C id=9  handle=cc49040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=13
+  195 S->C id=9  handle=cd49040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  196 S->C id=9  handle=ce49040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=14
+  197 S->C id=9  handle=cf49040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=10
+  198 S->C id=9  handle=d049040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=8
+  199 S->C id=9  handle=d149040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=9
+  200 S->C id=9  handle=d249040000000004
+        key: obj class=config chunks=6
+        val: obj class=0x7f00015 chunks=14
+  201 S->C id=9  handle=d349040000000004
+        key: obj class=config chunks=4
+  202 S->C id=9  handle=d449040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=14
+  203 C->S id=1  handle=c749040000000004
+  204 C->S id=1  handle=cb49040000000004
+        key: obj class=config chunks=14 strings=X&
+  205 C->S id=1  handle=ce49040000000004
+  206 S->C id=9  handle=d549040000000004
+        key: obj class=config chunks=4
+  207 S->C id=9  handle=d649040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=11
+  208 C->S id=1  handle=cd49040000000004
+        key: obj class=state chunks=2
+  209 C->S id=1  handle=cf49040000000004
+  210 C->S id=1  handle=d049040000000004
+        key: obj class=state chunks=2
+  211 C->S id=1  handle=d249040000000004
+  212 C->S id=1  handle=c849040000000004
+  213 C->S id=1  handle=c949040000000004
+        key: obj class=state chunks=2 strings=ether1,ether macs=52:54:00:cc:01:02
+  214 C->S id=1  handle=ca49040000000004
+        key: obj class=state chunks=2
+  215 C->S id=1  handle=d149040000000004
+        key: obj class=state chunks=2
+  216 C->S id=1  handle=d449040000000004
+        key: obj class=state chunks=2 strings=CHR,MikroTik,CHR,DiS1woDQxaB,7.26beta1 2026-10-01 13:29:47 macs=52:54:00:cc:01:01
+  217 C->S id=1  handle=cc49040000000004
+        key: obj class=state chunks=2
+  218 C->S id=1  handle=d549040000000004
+        key: obj class=config chunks=8
+  219 C->S id=1  handle=d649040000000004
+        key: obj class=state chunks=2
+  220 C->S id=1  handle=d349040000000004
+        key: obj class=config chunks=46 strings=CHR,7.26beta1,CHR,CHR QEMU Standard PC (i440FX + PIIX, 1996)
+  221 S->C id=9  handle=e749040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=11
+  222 S->C id=9  handle=e849040000000004
+        key: obj class=config chunks=4
+  223 S->C id=9  handle=e949040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=8
+  224 S->C id=9  handle=ea49040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=17 strings=I#,q",9#
+  225 S->C id=9  handle=eb49040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=14
+  226 S->C id=9  handle=ec49040000000004
+        key: obj class=config chunks=4
+  227 S->C id=9  handle=ed49040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=13
+  228 S->C id=9  handle=ee49040000000004
+        key: obj class=config chunks=6
+        val: obj class=0x7f00015 chunks=14
+  229 S->C id=9  handle=ef49040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=24
+  230 S->C id=9  handle=f049040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  231 C->S id=1  handle=eb49040000000004
+  232 C->S id=1  handle=ef49040000000004
+  233 S->C id=9  handle=f149040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=30
+  234 S->C id=9  handle=f249040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=14
+  235 S->C id=9  handle=f349040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=10
+  236 S->C id=9  handle=f449040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  237 S->C id=9  handle=f549040000000004
+        key: obj class=config chunks=4 strings=X&
+  238 S->C id=9  handle=f649040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=9
+  239 C->S id=1  handle=e949040000000004
+        key: obj class=state chunks=2
+  240 C->S id=1  handle=e849040000000004
+        key: obj class=config chunks=8
+  241 C->S id=1  handle=ee49040000000004
+  242 C->S id=1  handle=ed49040000000004
+        key: obj class=state chunks=2
+  243 C->S id=1  handle=f049040000000004
+  244 C->S id=1  handle=e749040000000004
+        key: obj class=state chunks=2
+  245 C->S id=1  handle=ea49040000000004
+        key: obj class=state chunks=2 strings=ether1,ether macs=52:54:00:cc:01:02
+  246 C->S id=1  handle=f549040000000004
+        key: obj class=config chunks=14 strings=X&
+  247 C->S id=1  handle=f349040000000004
+  248 C->S id=1  handle=f449040000000004
+        key: obj class=state chunks=2
+  249 C->S id=1  handle=f149040000000004
+        key: obj class=state chunks=2
+  250 C->S id=1  handle=f649040000000004
+        key: obj class=state chunks=2
+  251 C->S id=1  handle=f249040000000004
+        key: obj class=state chunks=2 strings=CHR,MikroTik,CHR,DiS1woDQxaB,7.26beta1 2026-10-01 13:29:47 macs=52:54:00:cc:01:01
+  252 C->S id=1  handle=ec49040000000004
+        key: obj class=config chunks=46 strings=CHR,7.26beta1,CHR,CHR QEMU Standard PC (i440FX + PIIX, 1996)
+  253 S->C id=9  handle=074a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=9
+  254 S->C id=9  handle=084a040000000004
+        key: obj class=config chunks=4 strings=X&
+  255 S->C id=9  handle=094a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  256 S->C id=9  handle=0a4a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=8
+  257 S->C id=9  handle=0b4a040000000004
+        key: obj class=config chunks=6
+        val: obj class=0x7f00015 chunks=14
+  258 C->S id=1  handle=084a040000000004
+        key: obj class=config chunks=14 strings=X&
+  259 C->S id=1  handle=0a4a040000000004
+        key: obj class=state chunks=2
+  260 C->S id=1  handle=0b4a040000000004
+  261 C->S id=1  handle=094a040000000004
+  262 C->S id=1  handle=074a040000000004
+        key: obj class=state chunks=2
+  263 S->C id=9  handle=0c4a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=10
+  264 S->C id=9  handle=0d4a040000000004
+        key: obj class=config chunks=4
+  265 S->C id=9  handle=0e4a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=14
+  266 S->C id=9  handle=0f4a040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=11
+  267 S->C id=9  handle=104a040000000004
+        key: obj class=config chunks=4
+  268 S->C id=9  handle=114a040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=17 strings=I#,q",9#
+  269 S->C id=9  handle=124a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  270 S->C id=9  handle=134a040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=24
+  271 S->C id=9  handle=144a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=13
+  272 S->C id=9  handle=154a040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=14
+  273 S->C id=9  handle=164a040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=30
+  274 C->S id=1  handle=134a040000000004
+  275 C->S id=1  handle=154a040000000004
+  276 C->S id=1  handle=0c4a040000000004
+  277 C->S id=1  handle=124a040000000004
+        key: obj class=state chunks=2
+  278 C->S id=1  handle=104a040000000004
+        key: obj class=config chunks=8
+  279 C->S id=1  handle=0f4a040000000004
+        key: obj class=state chunks=2
+  280 C->S id=1  handle=114a040000000004
+        key: obj class=state chunks=2 strings=ether1,ether macs=52:54:00:cc:01:02
+  281 C->S id=1  handle=164a040000000004
+        key: obj class=state chunks=2
+  282 C->S id=1  handle=0e4a040000000004
+        key: obj class=state chunks=2 strings=CHR,MikroTik,CHR,DiS1woDQxaB,7.26beta1 2026-10-01 13:29:47 macs=52:54:00:cc:01:01
+  283 C->S id=1  handle=144a040000000004
+        key: obj class=state chunks=2
+  284 C->S id=1  handle=0d4a040000000004
+        key: obj class=config chunks=46 strings=CHR,7.26beta1,CHR,CHR QEMU Standard PC (i440FX + PIIX, 1996)
+  285 S->C id=9  handle=274a040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=30
+  286 S->C id=9  handle=284a040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=14
+  287 S->C id=9  handle=294a040000000004
+        key: obj class=config chunks=4
+  288 S->C id=9  handle=2a4a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  289 S->C id=9  handle=2b4a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=14
+  290 S->C id=9  handle=2c4a040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=24
+  291 S->C id=9  handle=2d4a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=10
+  292 C->S id=1  handle=284a040000000004
+  293 C->S id=1  handle=2c4a040000000004
+  294 C->S id=1  handle=2d4a040000000004
+  295 C->S id=1  handle=294a040000000004
+        key: obj class=config chunks=8
+  296 C->S id=1  handle=2a4a040000000004
+  297 C->S id=1  handle=274a040000000004
+        key: obj class=state chunks=2
+  298 S->C id=9  handle=2e4a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  299 S->C id=9  handle=2f4a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=9
+  300 S->C id=9  handle=304a040000000004
+        key: obj class=config chunks=4 strings=X&
+  301 S->C id=9  handle=314a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=8
+  302 S->C id=9  handle=324a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=13
+  303 S->C id=9  handle=334a040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=11
+  304 S->C id=9  handle=344a040000000004
+        key: obj class=config chunks=4
+  305 S->C id=9  handle=354a040000000004
+        key: obj class=config chunks=6
+        val: obj class=0x7f00015 chunks=14
+  306 S->C id=9  handle=364a040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=17 strings=I#,q",9#
+  307 C->S id=1  handle=2b4a040000000004
+        key: obj class=state chunks=2 strings=CHR,MikroTik,CHR,DiS1woDQxaB,7.26beta1 2026-10-01 13:29:47 macs=52:54:00:cc:01:01
+  308 C->S id=1  handle=304a040000000004
+        key: obj class=config chunks=14 strings=X&
+  309 C->S id=1  handle=2e4a040000000004
+        key: obj class=state chunks=2
+  310 C->S id=1  handle=314a040000000004
+        key: obj class=state chunks=2
+  311 C->S id=1  handle=354a040000000004
+  312 C->S id=1  handle=324a040000000004
+        key: obj class=state chunks=2
+  313 C->S id=1  handle=2f4a040000000004
+        key: obj class=state chunks=2
+  314 C->S id=1  handle=334a040000000004
+        key: obj class=state chunks=2
+  315 C->S id=1  handle=364a040000000004
+        key: obj class=state chunks=2 strings=ether1,ether macs=52:54:00:cc:01:02
+  316 C->S id=1  handle=344a040000000004
+        key: obj class=config chunks=46 strings=CHR,7.26beta1,CHR,CHR QEMU Standard PC (i440FX + PIIX, 1996)
+  317 S->C id=9  handle=474a040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=17 strings=I#,q",9#
+  318 S->C id=9  handle=484a040000000004
+        key: obj class=config chunks=6
+        val: obj class=0x7f00015 chunks=14
+  319 S->C id=9  handle=494a040000000004
+        key: obj class=config chunks=4 strings=X&
+  320 S->C id=9  handle=4a4a040000000004
+        key: obj class=config chunks=4
+  321 S->C id=9  handle=4b4a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  322 S->C id=9  handle=4c4a040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=11
+  323 S->C id=9  handle=4d4a040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=24
+  324 S->C id=9  handle=4e4a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=13
+  325 S->C id=9  handle=4f4a040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=30
+  326 S->C id=9  handle=504a040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=14
+  327 S->C id=9  handle=514a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  328 S->C id=9  handle=524a040000000004
+        key: obj class=config chunks=4
+  329 S->C id=9  handle=534a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=9
+  330 S->C id=9  handle=544a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=10
+  331 S->C id=9  handle=554a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=14
+  332 S->C id=9  handle=564a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=8
+  333 C->S id=1  handle=494a040000000004
+        key: obj class=config chunks=14 strings=X&
+  334 C->S id=1  handle=4d4a040000000004
+  335 C->S id=1  handle=504a040000000004
+  336 C->S id=1  handle=4b4a040000000004
+        key: obj class=state chunks=2
+  337 C->S id=1  handle=544a040000000004
+  338 C->S id=1  handle=514a040000000004
+  339 C->S id=1  handle=564a040000000004
+        key: obj class=state chunks=2
+  340 C->S id=1  handle=484a040000000004
+  341 C->S id=1  handle=4a4a040000000004
+        key: obj class=config chunks=8
+  342 C->S id=1  handle=474a040000000004
+        key: obj class=state chunks=2 strings=ether1,ether macs=52:54:00:cc:01:02
+  343 C->S id=1  handle=4c4a040000000004
+        key: obj class=state chunks=2
+  344 C->S id=1  handle=4f4a040000000004
+        key: obj class=state chunks=2
+  345 C->S id=1  handle=554a040000000004
+        key: obj class=state chunks=2 strings=CHR,MikroTik,CHR,DiS1woDQxaB,7.26beta1 2026-10-01 13:29:47 macs=52:54:00:cc:01:01
+  346 C->S id=1  handle=4e4a040000000004
+        key: obj class=state chunks=2
+  347 C->S id=1  handle=534a040000000004
+        key: obj class=state chunks=2
+  348 C->S id=1  handle=524a040000000004
+        key: obj class=config chunks=46 strings=CHR,7.26beta1,CHR,CHR QEMU Standard PC (i440FX + PIIX, 1996)
+  349 S->C id=9  handle=674a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=8
+  350 S->C id=9  handle=684a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=14
+  351 S->C id=9  handle=694a040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=14
+  352 S->C id=9  handle=6a4a040000000004
+        key: obj class=config chunks=4 strings=X&
+  353 S->C id=9  handle=6b4a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=13
+  354 S->C id=9  handle=6c4a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=9
+  355 S->C id=9  handle=6d4a040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=11
+  356 S->C id=9  handle=6e4a040000000004
+        key: obj class=config chunks=4
+  357 S->C id=9  handle=6f4a040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=17 strings=I#,q",9#
+  358 S->C id=9  handle=704a040000000004
+        key: obj class=config chunks=6
+        val: obj class=0x7f00015 chunks=14
+  359 S->C id=9  handle=714a040000000004
+        key: obj class=config chunks=4
+  360 S->C id=9  handle=724a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=10
+  361 S->C id=9  handle=734a040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=30
+  362 S->C id=9  handle=744a040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=24
+  363 S->C id=9  handle=754a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  364 S->C id=9  handle=764a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  365 C->S id=1  handle=694a040000000004
+  366 C->S id=1  handle=6a4a040000000004
+        key: obj class=config chunks=14 strings=X&
+  367 C->S id=1  handle=744a040000000004
+  368 C->S id=1  handle=724a040000000004
+  369 C->S id=1  handle=754a040000000004
+        key: obj class=state chunks=2
+  370 C->S id=1  handle=674a040000000004
+        key: obj class=state chunks=2
+  371 C->S id=1  handle=704a040000000004
+  372 C->S id=1  handle=714a040000000004
+        key: obj class=config chunks=8
+  373 C->S id=1  handle=6b4a040000000004
+        key: obj class=state chunks=2
+  374 C->S id=1  handle=764a040000000004
+  375 C->S id=1  handle=6c4a040000000004
+        key: obj class=state chunks=2
+  376 C->S id=1  handle=6d4a040000000004
+        key: obj class=state chunks=2
+  377 C->S id=1  handle=6f4a040000000004
+        key: obj class=state chunks=2 strings=ether1,ether macs=52:54:00:cc:01:02
+  378 C->S id=1  handle=734a040000000004
+        key: obj class=state chunks=2
+  379 C->S id=1  handle=684a040000000004
+        key: obj class=state chunks=2 strings=CHR,MikroTik,CHR,DiS1woDQxaB,7.26beta1 2026-10-01 13:29:47 macs=52:54:00:cc:01:01
+  380 C->S id=1  handle=6e4a040000000004
+        key: obj class=config chunks=46 strings=CHR,7.26beta1,CHR,CHR QEMU Standard PC (i440FX + PIIX, 1996)
+  381 S->C id=9  handle=874a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  382 S->C id=9  handle=884a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  383 S->C id=9  handle=894a040000000004
+        key: obj class=config chunks=6
+        val: obj class=0x7f00015 chunks=14
+  384 S->C id=9  handle=8a4a040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=14
+  385 S->C id=9  handle=8b4a040000000004
+        key: obj class=config chunks=4
+  386 S->C id=9  handle=8c4a040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=30
+  387 S->C id=9  handle=8d4a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=9
+  388 S->C id=9  handle=8e4a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=10
+  389 C->S id=1  handle=8a4a040000000004
+  390 S->C id=9  handle=8f4a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=8
+  391 S->C id=9  handle=904a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=14
+  392 S->C id=9  handle=914a040000000004
+        key: obj class=config chunks=4 strings=X&
+  393 S->C id=9  handle=924a040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=24
+  394 S->C id=9  handle=934a040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=17 strings=I#,q",9#
+  395 S->C id=9  handle=944a040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=11
+  396 S->C id=9  handle=954a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=13
+  397 S->C id=9  handle=964a040000000004
+        key: obj class=config chunks=4
+  398 C->S id=1  handle=884a040000000004
+        key: obj class=state chunks=2
+  399 C->S id=1  handle=8e4a040000000004
+  400 C->S id=1  handle=894a040000000004
+  401 C->S id=1  handle=874a040000000004
+  402 C->S id=1  handle=8c4a040000000004
+        key: obj class=state chunks=2
+  403 C->S id=1  handle=8d4a040000000004
+        key: obj class=state chunks=2
+  404 C->S id=1  handle=914a040000000004
+        key: obj class=config chunks=14 strings=X&
+  405 C->S id=1  handle=924a040000000004
+  406 C->S id=1  handle=8f4a040000000004
+        key: obj class=state chunks=2
+  407 C->S id=1  handle=964a040000000004
+        key: obj class=config chunks=8
+  408 C->S id=1  handle=934a040000000004
+        key: obj class=state chunks=2 strings=ether1,ether macs=52:54:00:cc:01:02
+  409 C->S id=1  handle=944a040000000004
+        key: obj class=state chunks=2
+  410 C->S id=1  handle=904a040000000004
+        key: obj class=state chunks=2 strings=CHR,MikroTik,CHR,DiS1woDQxaB,7.26beta1 2026-10-01 13:29:47 macs=52:54:00:cc:01:01
+  411 C->S id=1  handle=8b4a040000000004
+        key: obj class=config chunks=46 strings=CHR,7.26beta1,CHR,CHR QEMU Standard PC (i440FX + PIIX, 1996)
+  412 C->S id=1  handle=954a040000000004
+        key: obj class=state chunks=2
+  413 S->C id=9  handle=a74a040000000004
+        key: obj class=config chunks=4
+  414 S->C id=9  handle=a84a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=13
+  415 S->C id=9  handle=a94a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=14
+  416 S->C id=9  handle=aa4a040000000004
+        key: obj class=config chunks=6
+        val: obj class=0x7f00015 chunks=14
+  417 S->C id=9  handle=ab4a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=10
+  418 S->C id=9  handle=ac4a040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=17 strings=I#,q",9#
+  419 S->C id=9  handle=ad4a040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=30
+  420 S->C id=9  handle=ae4a040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=24
+  421 S->C id=9  handle=af4a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  422 C->S id=1  handle=ae4a040000000004
+  423 S->C id=9  handle=b04a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  424 S->C id=9  handle=b14a040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=14
+  425 S->C id=9  handle=b24a040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=11
+  426 S->C id=9  handle=b34a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=8
+  427 S->C id=9  handle=b44a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=9
+  428 S->C id=9  handle=b54a040000000004
+        key: obj class=config chunks=4
+  429 S->C id=9  handle=b64a040000000004
+        key: obj class=config chunks=4 strings=X&
+  430 C->S id=1  handle=ab4a040000000004
+  431 C->S id=1  handle=a74a040000000004
+        key: obj class=config chunks=8
+  432 C->S id=1  handle=aa4a040000000004
+  433 C->S id=1  handle=af4a040000000004
+  434 C->S id=1  handle=ac4a040000000004
+        key: obj class=state chunks=2 strings=ether1,ether macs=52:54:00:cc:01:02
+  435 C->S id=1  handle=ad4a040000000004
+        key: obj class=state chunks=2
+  436 C->S id=1  handle=a94a040000000004
+        key: obj class=state chunks=2 strings=CHR,MikroTik,CHR,DiS1woDQxaB,7.26beta1 2026-10-01 13:29:47 macs=52:54:00:cc:01:01
+  437 C->S id=1  handle=a84a040000000004
+        key: obj class=state chunks=2
+  438 C->S id=1  handle=b14a040000000004
+  439 C->S id=1  handle=b64a040000000004
+        key: obj class=config chunks=14 strings=X&
+  440 C->S id=1  handle=b04a040000000004
+        key: obj class=state chunks=2
+  441 C->S id=1  handle=b34a040000000004
+        key: obj class=state chunks=2
+  442 C->S id=1  handle=b24a040000000004
+        key: obj class=state chunks=2
+  443 C->S id=1  handle=b44a040000000004
+        key: obj class=state chunks=2
+  444 C->S id=1  handle=b54a040000000004
+        key: obj class=config chunks=46 strings=CHR,7.26beta1,CHR,CHR QEMU Standard PC (i440FX + PIIX, 1996)
+  445 S->C id=9  handle=c74a040000000004
+        key: obj class=config chunks=4 strings=X&
+  446 S->C id=9  handle=c84a040000000004
+        key: obj class=config chunks=4
+  447 S->C id=9  handle=c94a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  448 S->C id=9  handle=ca4a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=14
+  449 S->C id=9  handle=cb4a040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=24
+  450 S->C id=9  handle=cc4a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=8
+  451 S->C id=9  handle=cd4a040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=17 strings=I#,q",9#
+  452 S->C id=9  handle=ce4a040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=11
+  453 S->C id=9  handle=cf4a040000000004
+        key: obj class=config chunks=4
+  454 S->C id=9  handle=d04a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=13
+  455 S->C id=9  handle=d14a040000000004
+        key: obj class=config chunks=6
+        val: obj class=0x7f00015 chunks=14
+  456 S->C id=9  handle=d24a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=9
+  457 C->S id=1  handle=c74a040000000004
+        key: obj class=config chunks=14 strings=X&
+  458 C->S id=1  handle=cb4a040000000004
+  459 C->S id=1  handle=c94a040000000004
+        key: obj class=state chunks=2
+  460 C->S id=1  handle=cc4a040000000004
+        key: obj class=state chunks=2
+  461 C->S id=1  handle=cf4a040000000004
+        key: obj class=config chunks=8
+  462 C->S id=1  handle=d14a040000000004
+  463 S->C id=9  handle=d34a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  464 S->C id=9  handle=d44a040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=30
+  465 S->C id=9  handle=d54a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=10
+  466 S->C id=9  handle=d64a040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=14
+  467 C->S id=1  handle=ca4a040000000004
+        key: obj class=state chunks=2 strings=CHR,MikroTik,CHR,DiS1woDQxaB,7.26beta1 2026-10-01 13:29:47 macs=52:54:00:cc:01:01
+  468 C->S id=1  handle=d04a040000000004
+        key: obj class=state chunks=2
+  469 C->S id=1  handle=cd4a040000000004
+        key: obj class=state chunks=2 strings=ether1,ether macs=52:54:00:cc:01:02
+  470 C->S id=1  handle=ce4a040000000004
+        key: obj class=state chunks=2
+  471 C->S id=1  handle=d24a040000000004
+        key: obj class=state chunks=2
+  472 C->S id=1  handle=d64a040000000004
+  473 C->S id=1  handle=d54a040000000004
+  474 C->S id=1  handle=d34a040000000004
+  475 C->S id=1  handle=d44a040000000004
+        key: obj class=state chunks=2
+  476 C->S id=1  handle=c84a040000000004
+        key: obj class=config chunks=46 strings=CHR,7.26beta1,CHR,CHR QEMU Standard PC (i440FX + PIIX, 1996)
+  477 S->C id=9  handle=e74a040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=14
+  478 S->C id=9  handle=e84a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=10
+  479 S->C id=9  handle=e94a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=13
+  480 S->C id=9  handle=ea4a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  481 S->C id=9  handle=eb4a040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=11
+  482 S->C id=9  handle=ec4a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  483 C->S id=1  handle=e74a040000000004
+  484 C->S id=1  handle=e84a040000000004
+  485 C->S id=1  handle=ea4a040000000004
+        key: obj class=state chunks=2
+  486 C->S id=1  handle=ec4a040000000004
+  487 S->C id=9  handle=ed4a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=8
+  488 S->C id=9  handle=ee4a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=9
+  489 S->C id=9  handle=ef4a040000000004
+        key: obj class=config chunks=4 strings=X&
+  490 S->C id=9  handle=f04a040000000004
+        key: obj class=config chunks=4
+  491 S->C id=9  handle=f14a040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=14
+  492 S->C id=9  handle=f24a040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=30
+  493 S->C id=9  handle=f34a040000000004
+        key: obj class=config chunks=4
+  494 S->C id=9  handle=f44a040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=17 strings=I#,q",9#
+  495 S->C id=9  handle=f54a040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=24
+  496 S->C id=9  handle=f64a040000000004
+        key: obj class=config chunks=6
+        val: obj class=0x7f00015 chunks=14
+  497 C->S id=1  handle=eb4a040000000004
+        key: obj class=state chunks=2
+  498 C->S id=1  handle=e94a040000000004
+        key: obj class=state chunks=2
+  499 C->S id=1  handle=ef4a040000000004
+        key: obj class=config chunks=14 strings=X&
+  500 C->S id=1  handle=f54a040000000004
+  501 C->S id=1  handle=ed4a040000000004
+        key: obj class=state chunks=2
+  502 C->S id=1  handle=f34a040000000004
+        key: obj class=config chunks=8
+  503 C->S id=1  handle=f64a040000000004
+  504 C->S id=1  handle=f14a040000000004
+        key: obj class=state chunks=2 strings=CHR,MikroTik,CHR,DiS1woDQxaB,7.26beta1 2026-10-01 13:29:47 macs=52:54:00:cc:01:01
+  505 C->S id=1  handle=ee4a040000000004
+        key: obj class=state chunks=2
+  506 C->S id=1  handle=f24a040000000004
+        key: obj class=state chunks=2
+  507 C->S id=1  handle=f44a040000000004
+        key: obj class=state chunks=2 strings=ether1,ether macs=52:54:00:cc:01:02
+  508 C->S id=1  handle=f04a040000000004
+        key: obj class=config chunks=46 strings=CHR,7.26beta1,CHR,CHR QEMU Standard PC (i440FX + PIIX, 1996)
+  509 S->C id=9  handle=074b040000000004
+        key: obj class=config chunks=6
+        val: obj class=0x7f00015 chunks=14
+  510 S->C id=9  handle=084b040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=24
+  511 S->C id=9  handle=094b040000000004
+        key: obj class=config chunks=4
+  512 S->C id=9  handle=0a4b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=13
+  513 S->C id=9  handle=0b4b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=9
+  514 S->C id=9  handle=0c4b040000000004
+        key: obj class=config chunks=4
+  515 S->C id=9  handle=0d4b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  516 S->C id=9  handle=0e4b040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=30
+  517 S->C id=9  handle=0f4b040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=14
+  518 S->C id=9  handle=104b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=10
+  519 S->C id=9  handle=114b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  520 S->C id=9  handle=124b040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=17 strings=I#,q",9#
+  521 S->C id=9  handle=134b040000000004
+        key: obj class=config chunks=4 strings=X&
+  522 S->C id=9  handle=144b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=8
+  523 S->C id=9  handle=154b040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=11
+  524 C->S id=1  handle=084b040000000004
+  525 C->S id=1  handle=0f4b040000000004
+  526 S->C id=9  handle=164b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=14
+  527 C->S id=1  handle=134b040000000004
+        key: obj class=config chunks=14 strings=X&
+  528 C->S id=1  handle=104b040000000004
+  529 C->S id=1  handle=114b040000000004
+        key: obj class=state chunks=2
+  530 C->S id=1  handle=074b040000000004
+  531 C->S id=1  handle=0c4b040000000004
+        key: obj class=config chunks=8
+  532 C->S id=1  handle=0a4b040000000004
+        key: obj class=state chunks=2
+  533 C->S id=1  handle=0d4b040000000004
+  534 C->S id=1  handle=144b040000000004
+        key: obj class=state chunks=2
+  535 C->S id=1  handle=0b4b040000000004
+        key: obj class=state chunks=2
+  536 C->S id=1  handle=0e4b040000000004
+        key: obj class=state chunks=2
+  537 C->S id=1  handle=124b040000000004
+        key: obj class=state chunks=2 strings=ether1,ether macs=52:54:00:cc:01:02
+  538 C->S id=1  handle=154b040000000004
+        key: obj class=state chunks=2
+  539 C->S id=1  handle=164b040000000004
+        key: obj class=state chunks=2 strings=CHR,MikroTik,CHR,DiS1woDQxaB,7.26beta1 2026-10-01 13:29:47 macs=52:54:00:cc:01:01
+  540 C->S id=1  handle=094b040000000004
+        key: obj class=config chunks=46 strings=CHR,7.26beta1,CHR,CHR QEMU Standard PC (i440FX + PIIX, 1996)
+  541 S->C id=9  handle=274b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=14
+  542 S->C id=9  handle=284b040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=11
+  543 S->C id=9  handle=294b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=10
+  544 S->C id=9  handle=2a4b040000000004
+        key: obj class=config chunks=4
+  545 S->C id=9  handle=2b4b040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=30
+  546 S->C id=9  handle=2c4b040000000004
+        key: obj class=config chunks=4 strings=X&
+  547 S->C id=9  handle=2d4b040000000004
+        key: obj class=config chunks=4
+  548 S->C id=9  handle=2e4b040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=17 strings=I#,q",9#
+  549 S->C id=9  handle=2f4b040000000004
+        key: obj class=config chunks=6
+        val: obj class=0x7f00015 chunks=14
+  550 S->C id=9  handle=304b040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=24
+  551 S->C id=9  handle=314b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=13
+  552 C->S id=1  handle=2c4b040000000004
+        key: obj class=config chunks=14 strings=X&
+  553 C->S id=1  handle=304b040000000004
+  554 S->C id=9  handle=324b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=8
+  555 S->C id=9  handle=334b040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=14
+  556 S->C id=9  handle=344b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  557 S->C id=9  handle=354b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=9
+  558 S->C id=9  handle=364b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  559 C->S id=1  handle=294b040000000004
+  560 C->S id=1  handle=2d4b040000000004
+        key: obj class=config chunks=8
+  561 C->S id=1  handle=2f4b040000000004
+  562 C->S id=1  handle=314b040000000004
+        key: obj class=state chunks=2
+  563 C->S id=1  handle=284b040000000004
+        key: obj class=state chunks=2
+  564 C->S id=1  handle=2b4b040000000004
+        key: obj class=state chunks=2
+  565 C->S id=1  handle=2e4b040000000004
+        key: obj class=state chunks=2 strings=ether1,ether macs=52:54:00:cc:01:02
+  566 C->S id=1  handle=274b040000000004
+        key: obj class=state chunks=2 strings=CHR,MikroTik,CHR,DiS1woDQxaB,7.26beta1 2026-10-01 13:29:47 macs=52:54:00:cc:01:01
+  567 C->S id=1  handle=334b040000000004
+  568 C->S id=1  handle=364b040000000004
+        key: obj class=state chunks=2
+  569 C->S id=1  handle=324b040000000004
+        key: obj class=state chunks=2
+  570 C->S id=1  handle=344b040000000004
+  571 C->S id=1  handle=354b040000000004
+        key: obj class=state chunks=2
+  572 C->S id=1  handle=2a4b040000000004
+        key: obj class=config chunks=46 strings=CHR,7.26beta1,CHR,CHR QEMU Standard PC (i440FX + PIIX, 1996)
+  573 S->C id=9  handle=474b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  574 S->C id=9  handle=484b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=9
+  575 S->C id=9  handle=494b040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=24
+  576 S->C id=9  handle=4a4b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=10
+  577 S->C id=9  handle=4b4b040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=17 strings=I#,q",9#
+  578 S->C id=9  handle=4c4b040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=14
+  579 S->C id=9  handle=4d4b040000000004
+        key: obj class=config chunks=4 strings=X&
+  580 C->S id=1  handle=494b040000000004
+  581 C->S id=1  handle=4c4b040000000004
+  582 C->S id=1  handle=4d4b040000000004
+        key: obj class=config chunks=14 strings=X&
+  583 C->S id=1  handle=474b040000000004
+        key: obj class=state chunks=2
+  584 C->S id=1  handle=4a4b040000000004
+  585 C->S id=1  handle=484b040000000004
+        key: obj class=state chunks=2
+  586 S->C id=9  handle=4e4b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=8
+  587 S->C id=9  handle=4f4b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=14
+  588 S->C id=9  handle=504b040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=11
+  589 S->C id=9  handle=514b040000000004
+        key: obj class=config chunks=4
+  590 S->C id=9  handle=524b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  591 S->C id=9  handle=534b040000000004
+        key: obj class=config chunks=6
+        val: obj class=0x7f00015 chunks=14
+  592 S->C id=9  handle=544b040000000004
+        key: obj class=config chunks=4
+  593 S->C id=9  handle=554b040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=30
+  594 S->C id=9  handle=564b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=13
+  595 C->S id=1  handle=4b4b040000000004
+        key: obj class=state chunks=2 strings=ether1,ether macs=52:54:00:cc:01:02
+  596 C->S id=1  handle=4e4b040000000004
+        key: obj class=state chunks=2
+  597 C->S id=1  handle=534b040000000004
+  598 C->S id=1  handle=544b040000000004
+        key: obj class=config chunks=8
+  599 C->S id=1  handle=524b040000000004
+  600 C->S id=1  handle=504b040000000004
+        key: obj class=state chunks=2
+  601 C->S id=1  handle=554b040000000004
+        key: obj class=state chunks=2
+  602 C->S id=1  handle=4f4b040000000004
+        key: obj class=state chunks=2 strings=CHR,MikroTik,CHR,DiS1woDQxaB,7.26beta1 2026-10-01 13:29:47 macs=52:54:00:cc:01:01
+  603 C->S id=1  handle=514b040000000004
+        key: obj class=config chunks=46 strings=CHR,7.26beta1,CHR,CHR QEMU Standard PC (i440FX + PIIX, 1996)
+  604 C->S id=1  handle=564b040000000004
+        key: obj class=state chunks=2
+  605 S->C id=9  handle=674b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=13
+  606 S->C id=9  handle=684b040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=30
+  607 S->C id=9  handle=694b040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=11
+  608 S->C id=9  handle=6a4b040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=24
+  609 S->C id=9  handle=6b4b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=8
+  610 S->C id=9  handle=6c4b040000000004
+        key: obj class=config chunks=6
+        val: obj class=0x7f00015 chunks=14
+  611 S->C id=9  handle=6d4b040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=14
+  612 S->C id=9  handle=6e4b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  613 S->C id=9  handle=6f4b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  614 C->S id=1  handle=6a4b040000000004
+  615 C->S id=1  handle=6d4b040000000004
+  616 S->C id=9  handle=704b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=9
+  617 S->C id=9  handle=714b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=10
+  618 S->C id=9  handle=724b040000000004
+        key: obj class=config chunks=4
+  619 S->C id=9  handle=734b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=14
+  620 S->C id=9  handle=744b040000000004
+        key: obj class=config chunks=4 strings=X&
+  621 S->C id=9  handle=754b040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=17 strings=I#,q",9#
+  622 S->C id=9  handle=764b040000000004
+        key: obj class=config chunks=4
+  623 C->S id=1  handle=6f4b040000000004
+        key: obj class=state chunks=2
+  624 C->S id=1  handle=6b4b040000000004
+        key: obj class=state chunks=2
+  625 C->S id=1  handle=6c4b040000000004
+  626 C->S id=1  handle=6e4b040000000004
+  627 C->S id=1  handle=674b040000000004
+        key: obj class=state chunks=2
+  628 C->S id=1  handle=684b040000000004
+        key: obj class=state chunks=2
+  629 C->S id=1  handle=694b040000000004
+        key: obj class=state chunks=2
+  630 C->S id=1  handle=744b040000000004
+        key: obj class=config chunks=14 strings=X&
+  631 C->S id=1  handle=714b040000000004
+  632 C->S id=1  handle=724b040000000004
+        key: obj class=config chunks=8
+  633 C->S id=1  handle=704b040000000004
+        key: obj class=state chunks=2
+  634 C->S id=1  handle=754b040000000004
+        key: obj class=state chunks=2 strings=ether1,ether macs=52:54:00:cc:01:02
+  635 C->S id=1  handle=734b040000000004
+        key: obj class=state chunks=2 strings=CHR,MikroTik,CHR,DiS1woDQxaB,7.26beta1 2026-10-01 13:29:47 macs=52:54:00:cc:01:01
+  636 C->S id=1  handle=764b040000000004
+        key: obj class=config chunks=46 strings=CHR,7.26beta1,CHR,CHR QEMU Standard PC (i440FX + PIIX, 1996)
+  637 S->C id=9  handle=874b040000000004
+        key: obj class=config chunks=4
+  638 S->C id=9  handle=884b040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=17 strings=I#,q",9#
+  639 S->C id=9  handle=894b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=9
+  640 S->C id=9  handle=8a4b040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=11
+  641 S->C id=9  handle=8b4b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  642 S->C id=9  handle=8c4b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=14
+  643 S->C id=9  handle=8d4b040000000004
+        key: obj class=config chunks=6
+        val: obj class=0x7f00015 chunks=14
+  644 S->C id=9  handle=8e4b040000000004
+        key: obj class=config chunks=4
+  645 S->C id=9  handle=8f4b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=13
+  646 S->C id=9  handle=904b040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=30
+  647 S->C id=9  handle=914b040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=24
+  648 S->C id=9  handle=924b040000000004
+        key: obj class=config chunks=4 strings=X&
+  649 S->C id=9  handle=934b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  650 S->C id=9  handle=944b040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=14
+  651 S->C id=9  handle=954b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=8
+  652 S->C id=9  handle=964b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=10
+  653 C->S id=1  handle=914b040000000004
+  654 C->S id=1  handle=924b040000000004
+        key: obj class=config chunks=14 strings=X&
+  655 C->S id=1  handle=944b040000000004
+  656 C->S id=1  handle=8d4b040000000004
+  657 C->S id=1  handle=8e4b040000000004
+        key: obj class=config chunks=8
+  658 C->S id=1  handle=8b4b040000000004
+  659 C->S id=1  handle=934b040000000004
+        key: obj class=state chunks=2
+  660 C->S id=1  handle=964b040000000004
+  661 C->S id=1  handle=954b040000000004
+        key: obj class=state chunks=2
+  662 C->S id=1  handle=8f4b040000000004
+        key: obj class=state chunks=2
+  663 C->S id=1  handle=8c4b040000000004
+        key: obj class=state chunks=2 strings=CHR,MikroTik,CHR,DiS1woDQxaB,7.26beta1 2026-10-01 13:29:47 macs=52:54:00:cc:01:01
+  664 C->S id=1  handle=884b040000000004
+        key: obj class=state chunks=2 strings=ether1,ether macs=52:54:00:cc:01:02
+  665 C->S id=1  handle=894b040000000004
+        key: obj class=state chunks=2
+  666 C->S id=1  handle=8a4b040000000004
+        key: obj class=state chunks=2
+  667 C->S id=1  handle=904b040000000004
+        key: obj class=state chunks=2
+  668 C->S id=1  handle=874b040000000004
+        key: obj class=config chunks=46 strings=CHR,7.26beta1,CHR,CHR QEMU Standard PC (i440FX + PIIX, 1996)
+  669 S->C id=9  handle=a74b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=10
+  670 S->C id=9  handle=a84b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=8
+  671 S->C id=9  handle=a94b040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=30
+  672 S->C id=9  handle=aa4b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=9
+  673 C->S id=1  handle=a74b040000000004
+  674 C->S id=1  handle=a84b040000000004
+        key: obj class=state chunks=2
+  675 C->S id=1  handle=a94b040000000004
+        key: obj class=state chunks=2
+  676 C->S id=1  handle=aa4b040000000004
+        key: obj class=state chunks=2
+  677 S->C id=9  handle=ab4b040000000004
+        key: obj class=config chunks=4
+  678 S->C id=9  handle=ac4b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  679 S->C id=9  handle=ad4b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=14
+  680 S->C id=9  handle=ae4b040000000004
+        key: obj class=config chunks=4 strings=X&
+  681 S->C id=9  handle=af4b040000000004
+        key: obj class=config chunks=4
+  682 S->C id=9  handle=b04b040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=17 strings=I#,q",9#
+  683 S->C id=9  handle=b14b040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=11
+  684 S->C id=9  handle=b24b040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=14
+  685 S->C id=9  handle=b34b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=13
+  686 S->C id=9  handle=b44b040000000004
+        key: obj class=config chunks=6
+        val: obj class=0x7f00015 chunks=14
+  687 S->C id=9  handle=b54b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  688 S->C id=9  handle=b64b040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=24
+  689 C->S id=1  handle=ae4b040000000004
+        key: obj class=config chunks=14 strings=X&
+  690 C->S id=1  handle=b24b040000000004
+  691 C->S id=1  handle=b64b040000000004
+  692 C->S id=1  handle=ac4b040000000004
+        key: obj class=state chunks=2
+  693 C->S id=1  handle=ab4b040000000004
+        key: obj class=config chunks=8
+  694 C->S id=1  handle=b44b040000000004
+  695 C->S id=1  handle=b54b040000000004
+  696 C->S id=1  handle=b04b040000000004
+        key: obj class=state chunks=2 strings=ether1,ether macs=52:54:00:cc:01:02
+  697 C->S id=1  handle=b14b040000000004
+        key: obj class=state chunks=2
+  698 C->S id=1  handle=b34b040000000004
+        key: obj class=state chunks=2
+  699 C->S id=1  handle=ad4b040000000004
+        key: obj class=state chunks=2 strings=CHR,MikroTik,CHR,DiS1woDQxaB,7.26beta1 2026-10-01 13:29:47 macs=52:54:00:cc:01:01
+  700 C->S id=1  handle=af4b040000000004
+        key: obj class=config chunks=46 strings=CHR,7.26beta1,CHR,CHR QEMU Standard PC (i440FX + PIIX, 1996)
+  701 S->C id=9  handle=c74b040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=24
+  702 S->C id=9  handle=c84b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  703 S->C id=9  handle=c94b040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=17 strings=I#,q",9#
+  704 S->C id=9  handle=ca4b040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=30
+  705 S->C id=9  handle=cb4b040000000004
+        key: obj class=config chunks=4 strings=X&
+  706 S->C id=9  handle=cc4b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=13
+  707 S->C id=9  handle=cd4b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  708 C->S id=1  handle=c74b040000000004
+  709 C->S id=1  handle=cb4b040000000004
+        key: obj class=config chunks=14 strings=X&
+  710 S->C id=9  handle=ce4b040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=14
+  711 S->C id=9  handle=cf4b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=10
+  712 S->C id=9  handle=d04b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=8
+  713 S->C id=9  handle=d14b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=9
+  714 S->C id=9  handle=d24b040000000004
+        key: obj class=config chunks=6
+        val: obj class=0x7f00015 chunks=14
+  715 S->C id=9  handle=d34b040000000004
+        key: obj class=config chunks=4
+  716 S->C id=9  handle=d44b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=14
+  717 S->C id=9  handle=d54b040000000004
+        key: obj class=config chunks=4
+  718 S->C id=9  handle=d64b040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=11
+  719 C->S id=1  handle=cd4b040000000004
+        key: obj class=state chunks=2
+  720 C->S id=1  handle=c84b040000000004
+  721 C->S id=1  handle=c94b040000000004
+        key: obj class=state chunks=2 strings=ether1,ether macs=52:54:00:cc:01:02
+  722 C->S id=1  handle=ca4b040000000004
+        key: obj class=state chunks=2
+  723 C->S id=1  handle=cc4b040000000004
+        key: obj class=state chunks=2
+  724 C->S id=1  handle=ce4b040000000004
+  725 C->S id=1  handle=cf4b040000000004
+  726 C->S id=1  handle=d04b040000000004
+        key: obj class=state chunks=2
+  727 C->S id=1  handle=d24b040000000004
+  728 C->S id=1  handle=d54b040000000004
+        key: obj class=config chunks=8
+  729 C->S id=1  handle=d44b040000000004
+        key: obj class=state chunks=2 strings=CHR,MikroTik,CHR,DiS1woDQxaB,7.26beta1 2026-10-01 13:29:47 macs=52:54:00:cc:01:01
+  730 C->S id=1  handle=d14b040000000004
+        key: obj class=state chunks=2
+  731 C->S id=1  handle=d64b040000000004
+        key: obj class=state chunks=2
+  732 C->S id=1  handle=d34b040000000004
+        key: obj class=config chunks=46 strings=CHR,7.26beta1,CHR,CHR QEMU Standard PC (i440FX + PIIX, 1996)
+  733 S->C id=9  handle=e74b040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=11
+  734 S->C id=9  handle=e84b040000000004
+        key: obj class=config chunks=4
+  735 S->C id=9  handle=e94b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=8
+  736 S->C id=9  handle=ea4b040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=17 strings=I#,q",9#
+  737 S->C id=9  handle=eb4b040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=14
+  738 S->C id=9  handle=ec4b040000000004
+        key: obj class=config chunks=4
+  739 S->C id=9  handle=ed4b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=13
+  740 S->C id=9  handle=ee4b040000000004
+        key: obj class=config chunks=6
+        val: obj class=0x7f00015 chunks=14
+  741 S->C id=9  handle=ef4b040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=24
+  742 S->C id=9  handle=f04b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  743 C->S id=1  handle=eb4b040000000004
+  744 C->S id=1  handle=ef4b040000000004
+  745 S->C id=9  handle=f14b040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=30
+  746 S->C id=9  handle=f24b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=14
+  747 S->C id=9  handle=f34b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=10
+  748 S->C id=9  handle=f44b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  749 S->C id=9  handle=f54b040000000004
+        key: obj class=config chunks=4 strings=X&
+  750 S->C id=9  handle=f64b040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=9
+  751 C->S id=1  handle=e94b040000000004
+        key: obj class=state chunks=2
+  752 C->S id=1  handle=e84b040000000004
+        key: obj class=config chunks=8
+  753 C->S id=1  handle=ee4b040000000004
+  754 C->S id=1  handle=ed4b040000000004
+        key: obj class=state chunks=2
+  755 C->S id=1  handle=f04b040000000004
+  756 C->S id=1  handle=e74b040000000004
+        key: obj class=state chunks=2
+  757 C->S id=1  handle=ea4b040000000004
+        key: obj class=state chunks=2 strings=ether1,ether macs=52:54:00:cc:01:02
+  758 C->S id=1  handle=ec4b040000000004
+        key: obj class=config chunks=46 strings=CHR,7.26beta1,CHR,CHR QEMU Standard PC (i440FX + PIIX, 1996)
+  759 C->S id=1  handle=f54b040000000004
+        key: obj class=config chunks=14 strings=X&
+  760 C->S id=1  handle=f34b040000000004
+  761 C->S id=1  handle=f44b040000000004
+        key: obj class=state chunks=2
+  762 C->S id=1  handle=f14b040000000004
+        key: obj class=state chunks=2
+  763 C->S id=1  handle=f64b040000000004
+        key: obj class=state chunks=2
+  764 C->S id=1  handle=f24b040000000004
+        key: obj class=state chunks=2 strings=CHR,MikroTik,CHR,DiS1woDQxaB,7.26beta1 2026-10-01 13:29:47 macs=52:54:00:cc:01:01
+  765 S->C id=9  handle=074c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=9
+  766 S->C id=9  handle=084c040000000004
+        key: obj class=config chunks=4 strings=X&
+  767 S->C id=9  handle=094c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  768 S->C id=9  handle=0a4c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=8
+  769 S->C id=9  handle=0b4c040000000004
+        key: obj class=config chunks=6
+        val: obj class=0x7f00015 chunks=14
+  770 S->C id=9  handle=0c4c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=10
+  771 S->C id=9  handle=0d4c040000000004
+        key: obj class=config chunks=4
+  772 S->C id=9  handle=0e4c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=14
+  773 S->C id=9  handle=0f4c040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=11
+  774 S->C id=9  handle=104c040000000004
+        key: obj class=config chunks=4
+  775 S->C id=9  handle=114c040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=17 strings=I#,q",9#
+  776 S->C id=9  handle=124c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  777 S->C id=9  handle=134c040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=24
+  778 S->C id=9  handle=144c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=13
+  779 S->C id=9  handle=154c040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=14
+  780 S->C id=9  handle=164c040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=30
+  781 C->S id=1  handle=084c040000000004
+        key: obj class=config chunks=14 strings=X&
+  782 C->S id=1  handle=134c040000000004
+  783 C->S id=1  handle=154c040000000004
+  784 C->S id=1  handle=0c4c040000000004
+  785 C->S id=1  handle=124c040000000004
+        key: obj class=state chunks=2
+  786 C->S id=1  handle=0a4c040000000004
+        key: obj class=state chunks=2
+  787 C->S id=1  handle=0b4c040000000004
+  788 C->S id=1  handle=104c040000000004
+        key: obj class=config chunks=8
+  789 C->S id=1  handle=094c040000000004
+  790 C->S id=1  handle=144c040000000004
+        key: obj class=state chunks=2
+  791 C->S id=1  handle=074c040000000004
+        key: obj class=state chunks=2
+  792 C->S id=1  handle=0f4c040000000004
+        key: obj class=state chunks=2
+  793 C->S id=1  handle=114c040000000004
+        key: obj class=state chunks=2 strings=ether1,ether macs=52:54:00:cc:01:02
+  794 C->S id=1  handle=164c040000000004
+        key: obj class=state chunks=2
+  795 C->S id=1  handle=0e4c040000000004
+        key: obj class=state chunks=2 strings=CHR,MikroTik,CHR,DiS1woDQxaB,7.26beta1 2026-10-01 13:29:47 macs=52:54:00:cc:01:01
+  796 C->S id=1  handle=0d4c040000000004
+        key: obj class=config chunks=46 strings=CHR,7.26beta1,CHR,CHR QEMU Standard PC (i440FX + PIIX, 1996)
+  797 S->C id=9  handle=274c040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=30
+  798 S->C id=9  handle=284c040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=14
+  799 S->C id=9  handle=294c040000000004
+        key: obj class=config chunks=4
+  800 S->C id=9  handle=2a4c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  801 S->C id=9  handle=2b4c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=14
+  802 S->C id=9  handle=2c4c040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=24
+  803 C->S id=1  handle=284c040000000004
+  804 C->S id=1  handle=2c4c040000000004
+  805 C->S id=1  handle=294c040000000004
+        key: obj class=config chunks=8
+  806 C->S id=1  handle=2a4c040000000004
+  807 C->S id=1  handle=274c040000000004
+        key: obj class=state chunks=2
+  808 S->C id=9  handle=2d4c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=10
+  809 S->C id=9  handle=2e4c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  810 S->C id=9  handle=2f4c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=9
+  811 S->C id=9  handle=304c040000000004
+        key: obj class=config chunks=4 strings=X&
+  812 S->C id=9  handle=314c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=8
+  813 S->C id=9  handle=324c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=13
+  814 S->C id=9  handle=334c040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=11
+  815 S->C id=9  handle=344c040000000004
+        key: obj class=config chunks=4
+  816 S->C id=9  handle=354c040000000004
+        key: obj class=config chunks=6
+        val: obj class=0x7f00015 chunks=14
+  817 S->C id=9  handle=364c040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=17 strings=I#,q",9#
+  818 C->S id=1  handle=2b4c040000000004
+        key: obj class=state chunks=2 strings=CHR,MikroTik,CHR,DiS1woDQxaB,7.26beta1 2026-10-01 13:29:47 macs=52:54:00:cc:01:01
+  819 C->S id=1  handle=304c040000000004
+        key: obj class=config chunks=14 strings=X&
+  820 C->S id=1  handle=2d4c040000000004
+  821 C->S id=1  handle=2e4c040000000004
+        key: obj class=state chunks=2
+  822 C->S id=1  handle=314c040000000004
+        key: obj class=state chunks=2
+  823 C->S id=1  handle=354c040000000004
+  824 C->S id=1  handle=2f4c040000000004
+        key: obj class=state chunks=2
+  825 C->S id=1  handle=334c040000000004
+        key: obj class=state chunks=2
+  826 C->S id=1  handle=364c040000000004
+        key: obj class=state chunks=2 strings=ether1,ether macs=52:54:00:cc:01:02
+  827 C->S id=1  handle=324c040000000004
+        key: obj class=state chunks=2
+  828 C->S id=1  handle=344c040000000004
+        key: obj class=config chunks=46 strings=CHR,7.26beta1,CHR,CHR QEMU Standard PC (i440FX + PIIX, 1996)
+  829 S->C id=9  handle=474c040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=17 strings=I#,q",9#
+  830 S->C id=9  handle=484c040000000004
+        key: obj class=config chunks=6
+        val: obj class=0x7f00015 chunks=14
+  831 S->C id=9  handle=494c040000000004
+        key: obj class=config chunks=4 strings=X&
+  832 S->C id=9  handle=4a4c040000000004
+        key: obj class=config chunks=4
+  833 S->C id=9  handle=4b4c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  834 S->C id=9  handle=4c4c040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=11
+  835 S->C id=9  handle=4d4c040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=24
+  836 S->C id=9  handle=4e4c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=13
+  837 S->C id=9  handle=4f4c040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=30
+  838 S->C id=9  handle=504c040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=14
+  839 C->S id=1  handle=494c040000000004
+        key: obj class=config chunks=14 strings=X&
+  840 C->S id=1  handle=4d4c040000000004
+  841 C->S id=1  handle=504c040000000004
+  842 C->S id=1  handle=4b4c040000000004
+        key: obj class=state chunks=2
+  843 C->S id=1  handle=484c040000000004
+  844 C->S id=1  handle=4a4c040000000004
+        key: obj class=config chunks=8
+  845 S->C id=9  handle=514c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  846 S->C id=9  handle=524c040000000004
+        key: obj class=config chunks=4
+  847 S->C id=9  handle=534c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=9
+  848 S->C id=9  handle=544c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=10
+  849 S->C id=9  handle=554c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=14
+  850 S->C id=9  handle=564c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=8
+  851 C->S id=1  handle=474c040000000004
+        key: obj class=state chunks=2 strings=ether1,ether macs=52:54:00:cc:01:02
+  852 C->S id=1  handle=4c4c040000000004
+        key: obj class=state chunks=2
+  853 C->S id=1  handle=4f4c040000000004
+        key: obj class=state chunks=2
+  854 C->S id=1  handle=4e4c040000000004
+        key: obj class=state chunks=2
+  855 C->S id=1  handle=544c040000000004
+  856 C->S id=1  handle=564c040000000004
+        key: obj class=state chunks=2
+  857 C->S id=1  handle=514c040000000004
+  858 C->S id=1  handle=554c040000000004
+        key: obj class=state chunks=2 strings=CHR,MikroTik,CHR,DiS1woDQxaB,7.26beta1 2026-10-01 13:29:47 macs=52:54:00:cc:01:01
+  859 C->S id=1  handle=534c040000000004
+        key: obj class=state chunks=2
+  860 C->S id=1  handle=524c040000000004
+        key: obj class=config chunks=46 strings=CHR,7.26beta1,CHR,CHR QEMU Standard PC (i440FX + PIIX, 1996)
+  861 S->C id=9  handle=674c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=8
+  862 S->C id=9  handle=684c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=14
+  863 S->C id=9  handle=694c040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=14
+  864 S->C id=9  handle=6a4c040000000004
+        key: obj class=config chunks=4 strings=X&
+  865 S->C id=9  handle=6b4c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=13
+  866 S->C id=9  handle=6c4c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=9
+  867 S->C id=9  handle=6d4c040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=11
+  868 C->S id=1  handle=694c040000000004
+  869 C->S id=1  handle=6a4c040000000004
+        key: obj class=config chunks=14 strings=X&
+  870 S->C id=9  handle=6e4c040000000004
+        key: obj class=config chunks=4
+  871 S->C id=9  handle=6f4c040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=17 strings=I#,q",9#
+  872 S->C id=9  handle=704c040000000004
+        key: obj class=config chunks=6
+        val: obj class=0x7f00015 chunks=14
+  873 S->C id=9  handle=714c040000000004
+        key: obj class=config chunks=4
+  874 S->C id=9  handle=724c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=10
+  875 S->C id=9  handle=734c040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=30
+  876 S->C id=9  handle=744c040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=24
+  877 S->C id=9  handle=754c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  878 S->C id=9  handle=764c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  879 C->S id=1  handle=674c040000000004
+        key: obj class=state chunks=2
+  880 C->S id=1  handle=6c4c040000000004
+        key: obj class=state chunks=2
+  881 C->S id=1  handle=6d4c040000000004
+        key: obj class=state chunks=2
+  882 C->S id=1  handle=684c040000000004
+        key: obj class=state chunks=2 strings=CHR,MikroTik,CHR,DiS1woDQxaB,7.26beta1 2026-10-01 13:29:47 macs=52:54:00:cc:01:01
+  883 C->S id=1  handle=6b4c040000000004
+        key: obj class=state chunks=2
+  884 C->S id=1  handle=744c040000000004
+  885 C->S id=1  handle=724c040000000004
+  886 C->S id=1  handle=754c040000000004
+        key: obj class=state chunks=2
+  887 C->S id=1  handle=704c040000000004
+  888 C->S id=1  handle=714c040000000004
+        key: obj class=config chunks=8
+  889 C->S id=1  handle=764c040000000004
+  890 C->S id=1  handle=6f4c040000000004
+        key: obj class=state chunks=2 strings=ether1,ether macs=52:54:00:cc:01:02
+  891 C->S id=1  handle=734c040000000004
+        key: obj class=state chunks=2
+  892 C->S id=1  handle=6e4c040000000004
+        key: obj class=config chunks=46 strings=CHR,7.26beta1,CHR,CHR QEMU Standard PC (i440FX + PIIX, 1996)
+  893 S->C id=9  handle=874c040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=14
+  894 S->C id=9  handle=884c040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=17 strings=I#,q",9#
+  895 S->C id=9  handle=894c040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=24
+  896 S->C id=9  handle=8a4c040000000004
+        key: obj class=config chunks=4 strings=X&
+  897 S->C id=9  handle=8b4c040000000004
+        key: obj class=config chunks=4
+  898 S->C id=9  handle=8c4c040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=30
+  899 S->C id=9  handle=8d4c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=9
+  900 S->C id=9  handle=8e4c040000000004
+        key: obj class=config chunks=6
+        val: obj class=0x7f00015 chunks=14
+  901 S->C id=9  handle=8f4c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=8
+  902 S->C id=9  handle=904c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=14
+  903 S->C id=9  handle=914c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  904 S->C id=9  handle=924c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  905 C->S id=1  handle=874c040000000004
+  906 C->S id=1  handle=894c040000000004
+  907 C->S id=1  handle=8a4c040000000004
+        key: obj class=config chunks=14 strings=X&
+  908 S->C id=9  handle=934c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=10
+  909 S->C id=9  handle=944c040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=11
+  910 S->C id=9  handle=954c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=13
+  911 S->C id=9  handle=964c040000000004
+        key: obj class=config chunks=4
+  912 C->S id=1  handle=914c040000000004
+        key: obj class=state chunks=2
+  913 C->S id=1  handle=8f4c040000000004
+        key: obj class=state chunks=2
+  914 C->S id=1  handle=8e4c040000000004
+  915 C->S id=1  handle=884c040000000004
+        key: obj class=state chunks=2 strings=ether1,ether macs=52:54:00:cc:01:02
+  916 C->S id=1  handle=8c4c040000000004
+        key: obj class=state chunks=2
+  917 C->S id=1  handle=8d4c040000000004
+        key: obj class=state chunks=2
+  918 C->S id=1  handle=904c040000000004
+        key: obj class=state chunks=2 strings=CHR,MikroTik,CHR,DiS1woDQxaB,7.26beta1 2026-10-01 13:29:47 macs=52:54:00:cc:01:01
+  919 C->S id=1  handle=924c040000000004
+  920 C->S id=1  handle=934c040000000004
+  921 C->S id=1  handle=964c040000000004
+        key: obj class=config chunks=8
+  922 C->S id=1  handle=944c040000000004
+        key: obj class=state chunks=2
+  923 C->S id=1  handle=8b4c040000000004
+        key: obj class=config chunks=46 strings=CHR,7.26beta1,CHR,CHR QEMU Standard PC (i440FX + PIIX, 1996)
+  924 C->S id=1  handle=954c040000000004
+        key: obj class=state chunks=2
+  925 S->C id=9  handle=a74c040000000004
+        key: obj class=config chunks=4
+  926 S->C id=9  handle=a84c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=13
+  927 S->C id=9  handle=a94c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=14
+  928 S->C id=9  handle=aa4c040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=24
+  929 S->C id=9  handle=ab4c040000000004
+        key: obj class=config chunks=6
+        val: obj class=0x7f00015 chunks=14
+  930 S->C id=9  handle=ac4c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=10
+  931 S->C id=9  handle=ad4c040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=30
+  932 S->C id=9  handle=ae4c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  933 S->C id=9  handle=af4c040000000004
+        key: obj class=config chunks=4 strings=X&
+        val: obj class=0x7f00015 chunks=14
+  934 S->C id=9  handle=b04c040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=17 strings=I#,q",9#
+  935 S->C id=9  handle=b14c040000000004
+        key: obj class=config chunks=4 strings=X&
+  936 S->C id=9  handle=b24c040000000004
+        key: obj class=config chunks=8
+        val: obj class=0x7f00015 chunks=11
+  937 S->C id=9  handle=b34c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=8
+  938 C->S id=1  handle=aa4c040000000004
+  939 C->S id=1  handle=af4c040000000004
+  940 C->S id=1  handle=b14c040000000004
+        key: obj class=config chunks=14 strings=X&
+  941 C->S id=1  handle=ac4c040000000004
+  942 C->S id=1  handle=b34c040000000004
+        key: obj class=state chunks=2
+  943 C->S id=1  handle=ae4c040000000004
+  944 S->C id=9  handle=b44c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=9
+  945 S->C id=9  handle=b54c040000000004
+        key: obj class=config chunks=4
+  946 S->C id=9  handle=b64c040000000004
+        key: obj class=config chunks=4
+        val: obj class=0x7f00015 chunks=7
+  947 C->S id=1  handle=a74c040000000004
+        key: obj class=config chunks=8
+  948 C->S id=1  handle=ab4c040000000004
+  949 C->S id=1  handle=ad4c040000000004
+        key: obj class=state chunks=2
+  950 C->S id=1  handle=b04c040000000004
+        key: obj class=state chunks=2 strings=ether1,ether macs=52:54:00:cc:01:02
+  951 C->S id=1  handle=b24c040000000004
+        key: obj class=state chunks=2
+  952 C->S id=1  handle=a94c040000000004
+        key: obj class=state chunks=2 strings=CHR,MikroTik,CHR,DiS1woDQxaB,7.26beta1 2026-10-01 13:29:47 macs=52:54:00:cc:01:01
+  953 C->S id=1  handle=b64c040000000004
+        key: obj class=state chunks=2
+  954 C->S id=1  handle=a84c040000000004
+        key: obj class=state chunks=2
+  955 C->S id=1  handle=b44c040000000004
+        key: obj class=state chunks=2
+  956 C->S id=1  handle=b54c040000000004
+        key: obj class=config chunks=46 strings=CHR,7.26beta1,CHR,CHR QEMU Standard PC (i440FX + PIIX, 1996)
