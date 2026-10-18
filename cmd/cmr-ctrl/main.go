@@ -20,6 +20,7 @@
 package main
 
 import (
+	"bytes"
 	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/sha256"
@@ -49,6 +50,8 @@ var (
 	enumSel   string
 	pushFile  string
 	pushBlob  []byte
+	resyncFile string
+	resyncBlob []byte
 	subScope  string
 	subUser   string
 )
@@ -101,6 +104,7 @@ func main() {
 	flag.UintVar(&enumFlag, "enumflag", 0x18, "id29 flag byte for the getall query")
 	flag.StringVar(&enumSel, "enumsel", "", "hex id30 selector for the getall query (empty = none)")
 	flag.StringVar(&pushFile, "pushfile", "", "path to a hex blob of controller object-push bytes to send after a device resync (reading experiment: triggers the device to dump its objects)")
+	flag.StringVar(&resyncFile, "resyncfile", "", "path to a hex blob of id9 config objects to stream in response to the device's id7 getall (the controller's scope dump)")
 	flag.StringVar(&subScope, "sub", "", "after SUCCESS, send an id11 subscribe for this scope (e.g. com.mikrotik.cmr.config) to pull the device's object stream")
 	flag.StringVar(&subUser, "subuser", "", "optional id32 username for the id11 subscribe")
 	flag.Parse()
@@ -109,6 +113,12 @@ func main() {
 		must(err)
 		pushBlob = mustHex(strings.TrimSpace(string(b)))
 		log.Printf("loaded push blob: %d bytes", len(pushBlob))
+	}
+	if resyncFile != "" {
+		b, err := os.ReadFile(resyncFile)
+		must(err)
+		resyncBlob = mustHex(strings.TrimSpace(string(b)))
+		log.Printf("loaded resync blob: %d bytes", len(resyncBlob))
 	}
 
 	cert := identity(*keyfile)
@@ -137,6 +147,7 @@ type conn struct {
 	peer     string
 	in      *m3.StreamDecoder // continuous decoder for the device->controller stream
 	discSeq []byte            // last discovery/resync outer id21 (echoed back in verAck)
+	devFlag byte              // id29 flag from the device's discovery/getall query; objects must echo it
 	paired  bool
 }
 
@@ -236,18 +247,23 @@ func (c *conn) step(f m3.Field) [][]byte {
 		// drops the session. SUCCESS alone pairs. -probe/-enum are experiments.
 		c.paired = true
 		out := [][]byte{verAck(c.discSeq, 0x01)}
+		// srv (open mode) sends SUCCESS and the root id9 objects as ONE continuous
+		// m3 stream (id10 -> id9 -> id9 delta-chained in a single write). The device
+		// routes an object that delta-chains off the SUCCESS/scope context as an ADD
+		// (create pairing); a standalone absolute id9 is resolved as an existing id
+		// and misses ("not found"). So the roots MUST ride the SUCCESS frame.
 		switch {
 		case probe:
-			out = append(out, successAndRowsFresh()) // SUCCESS + id9 rows (fresh-capture flag/handles)
+			out = append(out, successAndRowsFresh())
+		case len(pushBlob) > 0 && c.devFlag != 0:
+			// Only push roots once we have the device's query flag (it arrives in the
+			// 58-byte discovery on the sync connection). On the device's first,
+			// minimal connection we just SUCCESS and let it reconnect — exactly srv's
+			// behaviour — avoiding a push with the wrong flag.
+			out = append(out, successWithRootsFrame(pushBlob, c.devFlag))
+			log.Printf("[%s]   -> SUCCESS+roots in one stream (flag=%#x)", c.peer, c.devFlag)
 		default:
 			out = append(out, successFrame())
-		}
-		// Advertise the controller's own scope objects (its id9 "roots": the node
-		// + board, flag 0x33, handles ...01). The device needs at least these valid
-		// com.mikrotik.cmr objects before it will reciprocate with its own dump.
-		if len(pushBlob) > 0 {
-			out = append(out, pushBlob)
-			log.Printf("[%s]   -> sent %d-byte controller root push after SUCCESS", c.peer, len(pushBlob))
 		}
 		if enumScope != "" {
 			out = append(out, getAll(enumScope, byte(enumFlag), mustHex(enumSel)))
@@ -265,11 +281,25 @@ func (c *conn) step(f m3.Field) [][]byte {
 			if b, ok := inner.GetBytes(idSeq); ok {
 				c.discSeq = append([]byte(nil), b...)
 			}
+			// The device's query carries an id29 flag inside its nested id4 that the
+			// controller MUST echo in every object it pushes (srv does exactly this).
+			// A mismatched flag makes the device fail to match our objects to its
+			// query and reject them "not found". Capture it here.
+			if q, ok := inner.GetNested(idQuery); ok {
+				if b, ok := q.GetBytes(idDevFl); ok && len(b) == 1 {
+					c.devFlag = b[0]
+				}
+			}
 		}
 		if f.ID == idResync {
-			// A resync (id7) is the device's getall for the controller's scope. The
-			// controller's root objects were already advertised right after SUCCESS,
-			// so just absorb this; answering again would duplicate handles.
+			// A resync (id7) is the device's getall for the controller's scope.
+			// A real controller (srv, open mode) answers it by streaming its config
+			// objects as an id9 burst — THAT is what makes the device reciprocate
+			// with its own state dump. Replay srv's captured config stream here.
+			if len(resyncBlob) > 0 {
+				log.Printf("[%s]   -> id7 getall: streaming %d-byte config id9 burst (flag=%#x)", c.peer, len(resyncBlob), c.devFlag)
+				return [][]byte{patchObjectFlag(resyncBlob, c.devFlag)}
+			}
 			return nil
 		}
 		return [][]byte{discAck(0x15)}
@@ -371,6 +401,49 @@ func mustHex(s string) []byte {
 	return b
 }
 
+// sessionEpoch is the per-session generation byte the device expects in object
+// handles: the controller's verAck inner seq = (device discovery seq) - 1. srv
+// (open mode) uses exactly this value in every id9 handle; a stale/mismatched
+// epoch makes the device resolve our ADDs as unknown existing ids ("not found").
+func sessionEpoch(c *conn) byte {
+	if len(c.discSeq) > 0 {
+		return c.discSeq[0] - 1
+	}
+	return 0x49
+}
+
+// patchHandleEpoch rewrites the epoch byte in every 8-byte object handle of a
+// captured id9 blob (srv's handles are `<idx> 49 04 00 00 00 00 04`) to this
+// session's epoch, so replayed objects land at handles the device accepts.
+func patchHandleEpoch(blob []byte, epoch byte) []byte {
+	needle := []byte{0x49, 0x04, 0x00, 0x00, 0x00, 0x00, 0x04}
+	out := append([]byte(nil), blob...)
+	for i := 0; i+len(needle) <= len(out); i++ {
+		if bytes.Equal(out[i:i+len(needle)], needle) {
+			out[i] = epoch
+		}
+	}
+	return out
+}
+
+// patchObjectFlag rewrites every object's id29 flag (encoded `d1 e9 <flag>` in
+// the captured blob, originally 0x10) to flag. The device's discovery/getall
+// query dictates this flag and will not match objects carrying a different one
+// (it answers them "not found"). flag==0 means "not captured" → leave as-is.
+func patchObjectFlag(blob []byte, flag byte) []byte {
+	if flag == 0 {
+		return blob
+	}
+	needle := []byte{0xd1, 0xe9, 0x10}
+	out := append([]byte(nil), blob...)
+	for i := 0; i+len(needle) <= len(out); i++ {
+		if bytes.Equal(out[i:i+len(needle)], needle) {
+			out[i+2] = flag
+		}
+	}
+	return out
+}
+
 func serverHello() []byte {
 	token := append(append([]byte(nil), helloMagic...), helloToken...)
 	return m3.New().PutBytes(idHello, token).Encode()
@@ -404,6 +477,21 @@ func verAck(discSeq []byte, status byte) []byte {
 // successFrame is the id10 pairing SUCCESS alone: {id23:scope, id27:0x00, id22:nonce}.
 func successFrame() []byte {
 	return m3.New().PutNested(idSucc, successInner()).Encode()
+}
+
+// successWithRootsFrame builds ONE continuous m3 stream: id10 SUCCESS followed by
+// the controller's root id9 objects (parsed out of a captured blob), each with
+// its handle epoch rewritten to this session's value. The id9 fields delta-chain
+// off the id10 inside a single Encode(), which is how srv frames it and what the
+// device needs to treat the objects as ADDs rather than lookups.
+func successWithRootsFrame(rootBlob []byte, flag byte) []byte {
+	m := m3.New().PutNested(idSucc, successInner())
+	for _, f := range m3.StreamAll(patchObjectFlag(rootBlob, flag)) {
+		if f.ID == 9 {
+			m.PutBytes(9, f.Value)
+		}
+	}
+	return m.Encode()
 }
 
 func successInner() *m3.Message {
