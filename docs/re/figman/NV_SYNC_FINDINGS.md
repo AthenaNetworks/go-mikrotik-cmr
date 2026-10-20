@@ -294,5 +294,67 @@ Handle **idx and epoch are controller-chosen and the device adopts them** (it
 echoes the root handle back as its descriptor seq). The earlier "device validates
 our epoch" and "verAck inner seq == epoch" readings were both wrong — symptoms of
 the flag mismatch. The objects pushed are currently srv's captured valid config
-(`docs/samples/controller-{roots,config}.hex`); generating our own config objects
-is the remaining work for the WRITE / management-push direction.
+(`docs/samples/controller-{roots,config}.hex`).
+
+## SOLVED (2026-10-20): cmr-ctrl DRIVES the WRITE direction — the device applies controller config
+
+Our controller now pushes a config object graph that a stock device applies as
+MANAGED config, live, with no RouterOS controller in the path. Verified: with
+`-writefile`, the device builds a **MANAGED `cmr-bridge`** (`vlan-filtering=yes`,
+flag `Y`, `RUNNING`) with `ether1` at `pvid=100` — byte-for-byte the effect a real
+controller produces from `/cmr/vlan/add vlan-ids=100`. Capture of our controller
+driving it: `docs/samples/ctrl-drives-write-vlan.log`.
+
+How it was found: CMR config is authored on the controller (`/cmr/vlan`,
+`/cmr/wifi`, `/cmr/device`, `/cmr/layout`). We set `/cmr/vlan/add vlan-ids=100` on
+srv and MITM'd a device sync (`docs/samples/write-sync-vlan.log`). srv isolates
+its own single uplink when the vlan applies (it builds the same managed bridge),
+so the push was captured by adding the config mid-session over the already-open
+MITM connection. The device built the managed bridge; we then replicated the
+exact push from cmr-ctrl.
+
+**The write is an `id7` into the device's OWN config scope**, NOT an `id9` in the
+`com.mikrotik.cmr` controller scope (that scope stayed pure skeleton — no bridge/
+vlan objects). Shape, exactly as the device's own getall is shaped:
+
+```
+id7{ id4{ id21 seq, id23 "com.mikrotik.cmr.config", id29 flag, id30 <graph> },
+     id22 nonce, id21 reqid }
+```
+
+The `id22` nonce and `id21` reqid live INSIDE the `id7` envelope (siblings of
+`id4`), not outside it — getting that nesting wrong (the old experimental
+`getAll()` put them outside) makes the device treat the frame as a plain read and
+answer by dumping its config instead of applying the graph. `id30` carries the
+desired object graph:
+
+```
+02 01 00                                   header
+4a00c03f d28a21 d3090036 d340420f(=1000000) 85 d3805101 d4c901c03f d30e00 fe   root cfg obj
+02 00 00 01 00                             delimiter (index 0)
+4a00c03f d21400 d2811a01 d3490040 0c d4c901c03f d30500 fe d3a10140 da"cmr-bridge"   bridge obj
+02 00 00 01 01                             delimiter (index 1)
+4a00c03f d21002 c902 d2c904 64(=vlan 100) 85 02 d4c901c03f d30500 fe   vlan obj
+03 0121 00d40900f007 02 01 01              trailer
+```
+
+Objects are class `4a00c03f` (config) with sub-type `c901c03f` (= `3fc001c9` LE).
+The device reconciles its config scope to this graph.
+
+Other details that matter:
+- **Timing.** The write must land when the device is in STEADY state (initial
+  `com.mikrotik.cmr` sync done, state dumped). Sent mid initial-sync the device
+  reads instead of applies. `cmr-ctrl` fires it on a timer (`-writedelay`, 6s)
+  after SUCCESS, off a goroutine with a write mutex (the controller→device
+  direction is one continuous stream, so sends must not interleave mid-frame).
+- **Flag.** The write's `id29` flag does NOT have to equal the device's query
+  flag (unlike the read-side object flag). srv used `0x1c`; it works verbatim even
+  when the device's own query flag that session is `0x1a`. `-writeflag` (default
+  `0x1c`).
+
+`cmr-ctrl` flags for the write: `-writefile <id30 graph hex>` `-writescope`
+(default `com.mikrotik.cmr.config`) `-writeflag` `-writedelay`. The graph pushed
+is srv's captured vlan-100 config (`docs/samples/write-config-vlan100.hex`);
+synthesising an arbitrary graph from the object schema (the 2-byte type-ids and
+positional fields inside class `4a00c03f`/`c901c03f`) is the remaining work for
+free-form config authoring.
