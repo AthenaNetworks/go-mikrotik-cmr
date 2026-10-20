@@ -78,6 +78,9 @@ the MACs — all pulled straight off the wire.
   device pairs to our Go process, and we read `ether1` and its MAC, the identity,
   the board string, the firmware version and the whole config/state graph
   straight off a device we're driving ourselves.
+- **And it now writes.** Our controller pushes a configuration into the device
+  and the device applies it: we make a stock box build a managed VLAN-filtering
+  bridge, with its uplink tagged into the VLAN, driven entirely by our Go process.
 
 Getting there meant un-learning a wrong conclusion. For a while the device
 answered "not found" to every object our controller announced, and the evidence
@@ -96,11 +99,23 @@ controller answers the device's "get everything" request by streaming its
 configuration first. Miss any one of these and you get a polite "not found";
 get all three right and the device hands you everything.
 
+The write took one more turn of the same crank: capture a real controller doing
+it, then reproduce it. We defined a VLAN on a RouterOS controller and watched it
+push the config to the device over the management channel — and watched the
+device build a managed bridge and tag its uplink into the VLAN. The push turned
+out to be a single message into the device's own config scope, carrying the
+desired object graph, with one easy-to-miss detail: a couple of envelope fields
+have to sit *inside* the message, not beside it, or the device reads instead of
+writes. Get that right, send it once the device has settled, and the device
+reconfigures itself to match. Our controller now does exactly that — no RouterOS
+in the path.
+
 ## What "done" looks like
 
 A controller process you can run anywhere that a fleet of stock MikroTik devices
 will pair with, that reads their full state and writes their configuration, built
-on a protocol documented down to the byte. Pairing and live reading are now in
-hand. What remains is the write direction — synthesising our own configuration
-objects rather than replaying a captured scaffold — so the controller doesn't
-just watch the fleet but configures it.
+on a protocol documented down to the byte. Pairing, live reading, and live
+writing are now in hand — a device we drive dumps its inventory and then builds
+the bridge and VLAN we tell it to. What remains is breadth: the config we push is
+still a captured object graph, so the next step is authoring arbitrary
+configuration from the object schema rather than replaying one we recorded.

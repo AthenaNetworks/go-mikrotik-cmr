@@ -21,6 +21,7 @@ and research project.
 | Full device inventory decoded from a real sync | Working — `capdump -objects` decodes the whole `id1`/`id9` object dump |
 | Password pairing (the PKEX PAKE) | Not implemented — runs in `ssld`, inlined/Montgomery-form; open pairing avoids it |
 | Object-sync dump driven live by **our** controller | **Working, verified live** — a stock device syncs and dumps its full state to `cmd/cmr-ctrl`, 0 not-found, no PKEX; see [Protocol notes](#protocol-notes) |
+| Config **write** driven live by **our** controller | **Working, verified live** — `cmd/cmr-ctrl -writefile` makes a stock device build a MANAGED `cmr-bridge` (vlan-filtering, `ether1` pvid=100), no RouterOS controller in the path; see [Protocol notes](#protocol-notes) |
 
 The controller currently implements the **open pairing** path. Password (PKEX)
 pairing is a custom, TLS-channel-bound EC+HMAC PAKE inside `ssld` and is out of
@@ -129,5 +130,17 @@ RouterOS controller running in open-pairing mode, are three:
 
 Handle index/epoch are controller-chosen and the device adopts them. Run it with
 `-pushfile docs/samples/controller-roots.hex -resyncfile docs/samples/controller-config.hex`
-(a captured valid controller-config scaffold). Synthesising our own configuration
-objects — the write/management direction — is the remaining work.
+(a captured valid controller-config scaffold).
+
+`cmd/cmr-ctrl` also **drives the write/management direction**: with `-writefile`
+it pushes a config object graph into the device's own config scope and the device
+applies it as MANAGED config — verified live by making a stock device build a
+`cmr-bridge` with VLAN filtering and `ether1` at pvid 100, exactly as a real
+controller does from `/cmr/vlan/add`. The write is an `id7` into
+`com.mikrotik.cmr.config` whose `id4` carries the desired object graph in `id30`
+(with the nonce/reqid nested *inside* the `id7`), pushed once the device reaches
+steady state (`-writedelay`). See
+[docs/re/figman/NV_SYNC_FINDINGS.md](docs/re/figman/NV_SYNC_FINDINGS.md). Run with
+`-writefile docs/samples/write-config-vlan100.hex`. The object graph pushed is a
+captured vlan-100 config; authoring an arbitrary graph from the `4a00c03f`/
+`c901c03f` object schema is the remaining work.
