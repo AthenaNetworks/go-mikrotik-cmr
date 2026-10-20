@@ -35,6 +35,7 @@ import (
 	"net"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/athenanetworks/cmr-server/pkg/cmr"
@@ -43,17 +44,22 @@ import (
 
 // runtime flags (set in main)
 var (
-	verbose   bool
-	probe     bool
-	enumScope string
-	enumFlag  uint
-	enumSel   string
-	pushFile  string
-	pushBlob  []byte
+	verbose    bool
+	probe      bool
+	enumScope  string
+	enumFlag   uint
+	enumSel    string
+	pushFile   string
+	pushBlob   []byte
 	resyncFile string
 	resyncBlob []byte
-	subScope  string
-	subUser   string
+	writeFile  string
+	writeBlob  []byte
+	writeScope string
+	writeFlag  uint
+	writeDelay time.Duration
+	subScope   string
+	subUser    string
 )
 
 // CMR control-channel constants recovered from the live protocol.
@@ -105,6 +111,10 @@ func main() {
 	flag.StringVar(&enumSel, "enumsel", "", "hex id30 selector for the getall query (empty = none)")
 	flag.StringVar(&pushFile, "pushfile", "", "path to a hex blob of controller object-push bytes to send after a device resync (reading experiment: triggers the device to dump its objects)")
 	flag.StringVar(&resyncFile, "resyncfile", "", "path to a hex blob of id9 config objects to stream in response to the device's id7 getall (the controller's scope dump)")
+	flag.StringVar(&writeFile, "writefile", "", "path to a hex id30 config payload (an object graph) to WRITE into the device's config scope after each resync — the management/write direction")
+	flag.StringVar(&writeScope, "writescope", "com.mikrotik.cmr.config", "scope for the config write (the device's own config scope)")
+	flag.UintVar(&writeFlag, "writeflag", 0x1c, "id29 flag byte for the config-write id7 (srv used 0x1c)")
+	flag.DurationVar(&writeDelay, "writedelay", 6*time.Second, "delay after SUCCESS before pushing the config WRITE (let the device finish its initial sync so it is in steady state)")
 	flag.StringVar(&subScope, "sub", "", "after SUCCESS, send an id11 subscribe for this scope (e.g. com.mikrotik.cmr.config) to pull the device's object stream")
 	flag.StringVar(&subUser, "subuser", "", "optional id32 username for the id11 subscribe")
 	flag.Parse()
@@ -119,6 +129,12 @@ func main() {
 		must(err)
 		resyncBlob = mustHex(strings.TrimSpace(string(b)))
 		log.Printf("loaded resync blob: %d bytes", len(resyncBlob))
+	}
+	if writeFile != "" {
+		b, err := os.ReadFile(writeFile)
+		must(err)
+		writeBlob = mustHex(strings.TrimSpace(string(b)))
+		log.Printf("loaded write payload: %d bytes (scope=%q flag=%#x)", len(writeBlob), writeScope, writeFlag)
 	}
 
 	cert := identity(*keyfile)
@@ -145,10 +161,31 @@ func main() {
 type conn struct {
 	tc       *tls.Conn
 	peer     string
-	in      *m3.StreamDecoder // continuous decoder for the device->controller stream
-	discSeq []byte            // last discovery/resync outer id21 (echoed back in verAck)
-	devFlag byte              // id29 flag from the device's discovery/getall query; objects must echo it
-	paired  bool
+	in       *m3.StreamDecoder // continuous decoder for the device->controller stream
+	discSeq  []byte            // last discovery/resync outer id21 (echoed back in verAck)
+	devFlag  byte              // id29 flag from the device's discovery/getall query; objects must echo it
+	paired   bool
+	mu       sync.Mutex // serializes writes to tc (main loop + the write-timer goroutine)
+	wroteCfg bool       // the config WRITE has been pushed once this connection
+}
+
+// send writes response frames to the device under the write lock. The device
+// decodes the controller->device direction as ONE continuous m3 stream, so the
+// lock also keeps a timer-driven config write from interleaving mid-frame with
+// the main loop's responses.
+func (c *conn) send(frames [][]byte) {
+	if len(frames) == 0 {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	for _, out := range frames {
+		log.Printf("[%s] S->C %d bytes: %s", c.peer, len(out), summary(firstDecode(out)))
+		if _, err := c.tc.Write(out); err != nil {
+			log.Printf("[%s] write failed: %v", c.peer, err)
+			return
+		}
+	}
 }
 
 func handle(tc *tls.Conn, idle time.Duration) {
@@ -191,13 +228,7 @@ func handle(tc *tls.Conn, idle time.Duration) {
 				if verbose {
 					fmt.Printf("  id=%d len=%d %x\n%s", f.ID, len(f.Value), f.Value, m3.Dump(f.Value, 6))
 				}
-				for _, out := range c.step(f) {
-					log.Printf("[%s] S->C %d bytes: %s", c.peer, len(out), summary(firstDecode(out)))
-					if _, werr := tc.Write(out); werr != nil {
-						log.Printf("[%s] write failed: %v", c.peer, werr)
-						return
-					}
-				}
+				c.send(c.step(f))
 			}
 		}
 		if err != nil {
@@ -272,6 +303,13 @@ func (c *conn) step(f m3.Field) [][]byte {
 		if subScope != "" {
 			out = append(out, subscribe(subScope, subUser))
 			log.Printf("[%s]   -> id11 subscribe scope=%q user=%q", c.peer, subScope, subUser)
+		}
+		// WRITE direction: once the device is paired and we know its query flag
+		// (the real sync connection), push the desired config graph into the
+		// device's own config scope after it has had time to finish the initial
+		// sync (steady state) — this is when a real controller emits the write.
+		if len(writeBlob) > 0 && c.devFlag != 0 {
+			go c.writeTimer()
 		}
 		return out
 
@@ -354,6 +392,47 @@ func getAll(scope string, flag byte, selector []byte) []byte {
 	}
 	q.PutU32(idStatus, 0)
 	return m3.New().PutNested(idResync, q).PutBytes(idNonce, randBytes(nonceSize)).Put(idSeq, []byte{0x02, 0x01}).Encode()
+}
+
+// writeTimer waits for the device to settle into steady state, then pushes the
+// config WRITE exactly once per connection.
+func (c *conn) writeTimer() {
+	time.Sleep(writeDelay)
+	c.mu.Lock()
+	already := c.wroteCfg
+	c.wroteCfg = true
+	c.mu.Unlock()
+	if already {
+		return
+	}
+	log.Printf("[%s]   -> id7 config WRITE (steady, +%s): scope=%q flag=%#x payload=%dB",
+		c.peer, writeDelay, writeScope, writeFlag, len(writeBlob))
+	c.send([][]byte{writeConfig(writeScope, byte(writeFlag), writeBlob)})
+}
+
+// writeConfig builds the controller->device config WRITE: an id7 whose id4 names
+// the device's own config scope and carries the desired object graph in id30.
+// Byte-shaped exactly like the write a real RouterOS controller emits when its
+// managed config changes (captured live: `/cmr/vlan/add vlan-ids=100` -> the
+// device builds a MANAGED cmr-bridge with ether1 at pvid=100). The device
+// reconciles its config scope to the id30 graph.
+//
+//	id7{ id4{ id21 seq, id23 scope, id29 flag, id30 graph }, id22 nonce, id21 reqid }
+func writeConfig(scope string, flag byte, payload []byte) []byte {
+	// id4: the query/selector body carrying the desired object graph in id30.
+	q := m3.New().
+		Put(idSeq, []byte{0x34}).
+		PutBytes(idScope, []byte(scope)).
+		Put(idDevFl, []byte{flag}).
+		PutBytes(30, payload)
+	// id7's value is { id4, id22 nonce, id21 reqid } — the nonce and reqid live
+	// INSIDE the id7 envelope (not as siblings of it), exactly as the captured
+	// controller write and the device's own getall are shaped.
+	inner := m3.New().
+		PutNested(idQuery, q).
+		PutBytes(idNonce, randBytes(nonceSize)).
+		Put(idSeq, []byte{0x35})
+	return m3.New().PutNested(idResync, inner).Encode()
 }
 
 // readObject logs a device-reported object (the reading path): its handle, flag,
@@ -589,7 +668,6 @@ func strField(m *m3.Message, id uint32) string {
 	}
 	return ""
 }
-
 
 func must(err error) {
 	if err != nil {
