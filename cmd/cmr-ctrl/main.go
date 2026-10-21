@@ -58,6 +58,8 @@ var (
 	writeScope string
 	writeFlag  uint
 	writeDelay time.Duration
+	writeVLAN  int
+	writeBr    string
 	subScope   string
 	subUser    string
 )
@@ -112,6 +114,8 @@ func main() {
 	flag.StringVar(&pushFile, "pushfile", "", "path to a hex blob of controller object-push bytes to send after a device resync (reading experiment: triggers the device to dump its objects)")
 	flag.StringVar(&resyncFile, "resyncfile", "", "path to a hex blob of id9 config objects to stream in response to the device's id7 getall (the controller's scope dump)")
 	flag.StringVar(&writeFile, "writefile", "", "path to a hex id30 config payload (an object graph) to WRITE into the device's config scope after each resync — the management/write direction")
+	flag.IntVar(&writeVLAN, "vlan", 0, "author a CMR vlan config (vlan-ids=<n>) in-process and WRITE it, equivalent to a captured -writefile; overrides -writefile when >0")
+	flag.StringVar(&writeBr, "bridgename", cmr.DefaultBridgeName, "managed bridge name for -vlan")
 	flag.StringVar(&writeScope, "writescope", "com.mikrotik.cmr.config", "scope for the config write (the device's own config scope)")
 	flag.UintVar(&writeFlag, "writeflag", 0x1c, "id29 flag byte for the config-write id7 (srv used 0x1c)")
 	flag.DurationVar(&writeDelay, "writedelay", 6*time.Second, "delay after SUCCESS before pushing the config WRITE (let the device finish its initial sync so it is in steady state)")
@@ -130,7 +134,10 @@ func main() {
 		resyncBlob = mustHex(strings.TrimSpace(string(b)))
 		log.Printf("loaded resync blob: %d bytes", len(resyncBlob))
 	}
-	if writeFile != "" {
+	if writeVLAN > 0 {
+		writeBlob = cmr.BuildVLANConfig(cmr.VLANConfig{VLANID: writeVLAN, BridgeName: writeBr})
+		log.Printf("authored vlan config: vlan-ids=%d bridge=%q -> %d bytes (scope=%q flag=%#x)", writeVLAN, writeBr, len(writeBlob), writeScope, writeFlag)
+	} else if writeFile != "" {
 		b, err := os.ReadFile(writeFile)
 		must(err)
 		writeBlob = mustHex(strings.TrimSpace(string(b)))

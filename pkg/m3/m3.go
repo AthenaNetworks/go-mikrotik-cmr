@@ -239,6 +239,12 @@ func appendChunk(b, data []byte) []byte {
 	return append(b, data...)
 }
 
+// AppendChunk appends data to b encoded as one m3 chunk — the inverse of
+// FirstChunk. A lone byte <=0xcf is inline, up to 31 bytes is a run (0xd0+len),
+// and longer values are length-prefixed. It is the primitive used to build
+// object bodies and the config object graph (see pkg/cmr.BuildVLANConfig).
+func AppendChunk(b, data []byte) []byte { return appendChunk(b, data) }
+
 // readChunk reads one m3 chunk starting at p, returning its data and the new
 // offset.
 func readChunk(b []byte, p int) ([]byte, int, error) {
