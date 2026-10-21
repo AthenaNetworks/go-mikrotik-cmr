@@ -64,11 +64,13 @@ func inlineStr(b []byte, off int) string {
 	s := b[off:end]
 	hasAlpha := false
 	for _, c := range s {
-		if c < 0x20 || c > 0x7e {
-			return ""
-		}
-		if (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') {
+		switch {
+		case c >= 'a' && c <= 'z', c >= 'A' && c <= 'Z':
 			hasAlpha = true
+		case c >= '0' && c <= '9', c == '-', c == '.', c == '_':
+			// identifier char
+		default:
+			return "" // not a bare param name (spaces, punctuation = help text)
 		}
 	}
 	if !hasAlpha {
@@ -91,31 +93,61 @@ func name(b []byte, at int) string {
 	return ""
 }
 
+// plausibleID screens for an nv attribute id: a 2-byte id (0x200..0xffff) or a
+// framework id in the 0xfe00xx/0xff00xx space. Filters out small console ids.
+func plausibleID(v uint32) bool {
+	if v == 0 || v >= 0x01000000 {
+		return false
+	}
+	if hi := v >> 16; hi == 0xfe || hi == 0xff {
+		lo := v & 0xffff
+		return lo >= 0x100 && lo < 0x10000
+	}
+	return v >= 0x200 && v < 0x10000
+}
+
+func u32(b []byte, i int) uint32 {
+	if i < 0 || i+4 > len(b) {
+		return 0
+	}
+	return binary.LittleEndian.Uint32(b[i:])
+}
+
+// poolStr resolves a pointer that may point into the string pool.
+func poolStr(b []byte, p uint32) string {
+	if p >= memBase && p < memBase+uint32(len(b)) {
+		return inlineStr(b, int(p-memBase))
+	}
+	return ""
+}
+
 func parse(b []byte) []entry {
 	seen := map[[2]uint64]entry{}
-	for i := 0; i+12 <= len(b); i += 4 {
-		if binary.LittleEndian.Uint32(b[i:]) != kindWord {
-			continue
-		}
-		id := binary.LittleEndian.Uint32(b[i+4:])
-		if id == 0 || id >= 0x01000000 {
-			continue
-		}
-		nm := name(b, i+8)
+	add := func(id uint32, nm string, tptr uint32) {
 		if nm == "" {
-			continue
-		}
-		var tptr uint32
-		if i >= 4 {
-			tptr = binary.LittleEndian.Uint32(b[i-4:])
+			return
 		}
 		t := typeName[tptr]
 		if t == "" {
-			t = fmt.Sprintf("t%#x", tptr)
+			t = "unknown"
 		}
 		key := [2]uint64{uint64(id), hash(nm)}
 		if _, ok := seen[key]; !ok {
 			seen[key] = entry{ID: id, Name: nm, Type: t, raw: tptr}
+		}
+	}
+	for i := 0; i+16 <= len(b); i += 4 {
+		// format 1 (property/enum record): [type-ptr][0x00040008][id][name]
+		if u32(b, i) == kindWord {
+			if id := u32(b, i+4); plausibleID(id) {
+				add(id, name(b, i+8), u32(b, i-4))
+			}
+		}
+		// format 2 (menu-arg record): name-ptr at id-12, a pointer right after id
+		if id := u32(b, i); plausibleID(id) && i >= 12 {
+			if nm := poolStr(b, u32(b, i-12)); nm != "" && (u32(b, i+4)>>24) == 0x50 {
+				add(id, nm, 0)
+			}
 		}
 	}
 	out := make([]entry, 0, len(seen))
@@ -143,23 +175,39 @@ func hash(s string) uint64 {
 func main() {
 	asJSON := flag.Bool("json", false, "emit JSON")
 	flag.Parse()
-	if flag.NArg() != 1 {
-		fmt.Fprintln(os.Stderr, "usage: cmr-schema [-json] <schema.mem>")
+	if flag.NArg() < 1 {
+		fmt.Fprintln(os.Stderr, "usage: cmr-schema [-json] <schema.mem> [schema.mem ...]")
 		os.Exit(2)
 	}
-	b, err := os.ReadFile(flag.Arg(0))
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+	seen := map[[2]uint64]bool{}
+	var entries []entry
+	for _, path := range flag.Args() {
+		b, err := os.ReadFile(path)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		for _, e := range parse(b) {
+			key := [2]uint64{uint64(e.ID), hash(e.Name)}
+			if !seen[key] {
+				seen[key] = true
+				entries = append(entries, e)
+			}
+		}
 	}
-	entries := parse(b)
+	sort.Slice(entries, func(i, j int) bool {
+		if entries[i].ID != entries[j].ID {
+			return entries[i].ID < entries[j].ID
+		}
+		return entries[i].Name < entries[j].Name
+	})
 	if *asJSON {
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
 		enc.Encode(entries)
 		return
 	}
-	fmt.Printf("# %d config attributes (nv id -> name [type]) from %s\n", len(entries), flag.Arg(0))
+	fmt.Printf("# %d config attributes (nv id -> name [type]) from %d file(s)\n", len(entries), flag.NArg())
 	for _, e := range entries {
 		fmt.Printf("  %#08x  %-30s %s\n", e.ID, e.Name, e.Type)
 	}

@@ -101,10 +101,21 @@ The `.mem` is a flat array of property records:
 ```
 
 `name` is inline NUL-terminated or a `0x50800000`-based pointer into the string
-pool. Six distinct type-descriptor pointers appear (u32 / flag / string / u32ro /
-mac / misc). `cmd/cmr-schema` parses this and emits the dictionary; the extracted
-7.26beta1 dictionary (195 attributes) is in `cmr-schema-7.26beta1.txt`. It re-runs
-on any firmware's `.mem`, so **the dictionary grows with new versions by design.**
+pool. There are two record shapes:
+
+- **format 1** (property/enum): `[type-ptr][0x00040008][id][inline name]` — the
+  type-ptr is one of six descriptors (u32 / flag / string / u32ro / mac / misc).
+- **format 2** (menu arg): the name is a string-pool pointer at `id-12`, with a
+  pointer (type/help) right after the id.
+
+`cmd/cmr-schema` parses both shapes across one or more `.mem` files and emits the
+dictionary. Run on the cmr package + wifi-bundle console schemas it yields **410
+config attributes** (`cmr-schema-7.26beta1.txt`): vlan-id, ssid, band,
+channel.frequency/width, bssid, bhaul-ssid, wifi-band, hide-ssid, target-layout,
+node1/2, links, upgrade-rule, action.log/script, … It re-runs on any firmware's
+`.mem`, so **the dictionary grows with new versions by design.** Types are filled
+from the `.mem` descriptor and, where the code addresses the id, confirmed from
+the decompile (`*` in the dump) — 154 of 410 typed so far.
 
 Full decompiles used to confirm this: `scratchpad/{cmr,umsg}_decomp.txt`
 (`analyzeHeadless` + Java `DecompAll` — Ghidra 12.x needs Java scripts, not
@@ -114,13 +125,15 @@ so the object body is an m3-folded (id, value) stream under the generic
 
 ## Remaining work
 
-1. **Coverage:** the flat scan gets 195 attributes; walk the menu tree and all
-   console `.mem` files for the full set (e.g. the dotted `security.*/channel.*`
-   that live deeper in the tree), and resolve the 6 type descriptors to exact nv
-   types by cross-referencing the typed accessors.
+1. **Type coverage:** 256 of 410 attributes still show `unknown` — the format-2
+   menu-arg records carry their own type descriptor (at `id+4`) that isn't yet
+   mapped; map those and cross-reference more decompiled accessors to type them.
+   A handful of params in deeper menu-tree layouts (some dotted `security.*`) are
+   not yet captured by the two record shapes.
 2. **Schema-driven encoder:** fold the dictionary into `pkg/cmr` so
    `BuildVLANConfig` generalises to `{type, {attr: value}}` → object graph, using
-   the id+type per attribute.
+   the id+type per attribute — the payoff that turns the dictionary into
+   free-form config authoring.
 
 Lab reality: multi-vlan/wifi can't be *validated* on CHR (no 2nd switch port
 semantics, no radio), but the schema-driven encoder can be built and unit-tested
