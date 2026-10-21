@@ -116,6 +116,15 @@ A controller process you can run anywhere that a fleet of stock MikroTik devices
 will pair with, that reads their full state and writes their configuration, built
 on a protocol documented down to the byte. Pairing, live reading, and live
 writing are now in hand — a device we drive dumps its inventory and then builds
-the bridge and VLAN we tell it to. What remains is breadth: the config we push is
-still a captured object graph, so the next step is authoring arbitrary
-configuration from the object schema rather than replaying one we recorded.
+the bridge and VLAN we tell it to.
+
+And the config we push is no longer a recording. We cracked the shape of the
+object graph: a stream of length-tagged chunks, three objects — a global entry, a
+bridge, a VLAN — each a class id followed by positional fields. Most of those
+fields are still opaque, but two we pinned down by changing them and watching the
+device obey: the VLAN id and the bridge name. So we now build the graph from a
+plain `{VLANID, BridgeName}` and the device applies it — we asked for VLAN 150 on
+a bridge named `athena-cmr`, from a struct, and that is exactly what it built,
+with nothing replayed. What remains is breadth: map the rest of the fields, and
+the other object types (Wi-Fi, device), the same way — change one thing, diff the
+bytes, watch the device.

@@ -353,8 +353,50 @@ Other details that matter:
   `0x1c`).
 
 `cmr-ctrl` flags for the write: `-writefile <id30 graph hex>` `-writescope`
-(default `com.mikrotik.cmr.config`) `-writeflag` `-writedelay`. The graph pushed
-is srv's captured vlan-100 config (`docs/samples/write-config-vlan100.hex`);
-synthesising an arbitrary graph from the object schema (the 2-byte type-ids and
-positional fields inside class `4a00c03f`/`c901c03f`) is the remaining work for
-free-form config authoring.
+(default `com.mikrotik.cmr.config`) `-writeflag` `-writedelay`.
+
+## SOLVED (2026-10-21): author the vlan config graph from structured input
+
+The `id30` graph is no longer a replayed capture — `pkg/cmr.BuildVLANConfig`
+constructs it from a `VLANConfig{VLANID, BridgeName}`, and a stock device applies
+authored graphs it has never seen. Verified live by driving `cmr-ctrl` → device
+(no RouterOS, no hex file): the device builds a managed bridge with the vlan id
+and bridge name we choose.
+
+- vlan 100 — `BuildVLANConfig` reproduces srv's capture **byte-for-byte**
+  (golden round-trip test, `pkg/cmr/config_test.go`).
+- vlan 200 — authored (1-byte id), device → `ether1 pvid=200`, bridge vlan 200.
+- vlan 300 — authored (2-byte id `d2 2c01`), device → `ether1 pvid=300`.
+- vlan 150 + bridge `athena-cmr` — authored in-process via `cmr-ctrl -vlan 150
+  -bridgename athena-cmr`, device → managed bridge `athena-cmr`, `ether1 pvid=150`.
+
+**The graph is a nested m3 chunk stream** (decode with `cmd/cfgdump`):
+
+```
+02 01 00                        header
+<object 0>                      global config entry
+02 00 00 01 <idx>  <object>     each further object, 0-based index
+03 0121 00d40900f007 02 01 01   trailer
+```
+
+Each top-level item is one m3 chunk (`pkg/m3.AppendChunk` / `FirstChunk`): a
+single byte ≤0xcf is inline, ≤31 bytes is a run (`0xd0+len`), longer is
+length-prefixed (`0xfe len8` …). Objects are chunks whose body is itself a chunk
+stream; the `02`/`00`/`01` framing bytes are 1-byte inline chunks. The vlan-100
+graph decomposes as three objects:
+
+```
+root : 4a00c03f | 8a21 | 090036 | 40420f(=1000000) | 85 | 805101(=86400) | c901c03f | 0e00fe
+bridge: 4a00c03f | 1400 | 811a | 01 | 490040 | 0c | c901c03f | 0500fe | a10140 | "cmr-bridge"
+vlan : 4a00c03f | 1002 | c9 | 02 | c904 | 64(=vlan id) | 85 | 02 | c901c03f | 0500fe
+```
+
+Each object is `ClassConfig` (`4a00c03f`) entry fields, then `ClassConfigValue`
+(`c901c03f`, LE `0x3fc001c9`) and value fields. **Confirmed positions:** the vlan
+id (a minimal-LE chunk, so `64` for 100, `d2 2c01` for 300) and the bridge name
+(a trailing string chunk in the bridge object). The remaining per-object chunks
+(`8a21`, `090036`, `490040`, `a10140`, `1002`, `c904`, the `85`/`02` markers …)
+are schema positions not yet mapped; `BuildVLANConfig` carries them verbatim, and
+the device accepts the result. Mapping them (e.g. multiple vlans, other object
+classes such as wifi/device, and the two root integers) is the method's next
+turn: drive srv with varied `/cmr/…` config and diff the captured graphs.

@@ -22,6 +22,7 @@ and research project.
 | Password pairing (the PKEX PAKE) | Not implemented — runs in `ssld`, inlined/Montgomery-form; open pairing avoids it |
 | Object-sync dump driven live by **our** controller | **Working, verified live** — a stock device syncs and dumps its full state to `cmd/cmr-ctrl`, 0 not-found, no PKEX; see [Protocol notes](#protocol-notes) |
 | Config **write** driven live by **our** controller | **Working, verified live** — `cmd/cmr-ctrl -writefile` makes a stock device build a MANAGED `cmr-bridge` (vlan-filtering, `ether1` pvid=100), no RouterOS controller in the path; see [Protocol notes](#protocol-notes) |
+| CMR vlan config **authored from structured input** (not replayed) | **Working, verified live** — `pkg/cmr.BuildVLANConfig` constructs the object graph; `cmd/cmr-ctrl -vlan N -bridgename X` pushes it and the device builds the bridge with the chosen vlan id + name (100/150/200/300 verified on the wire) |
 
 The controller currently implements the **open pairing** path. Password (PKEX)
 pairing is a custom, TLS-channel-bound EC+HMAC PAKE inside `ssld` and is out of
@@ -64,6 +65,7 @@ pkg/mtls/        minimal cert-tolerant TLS 1.2 client
 cmd/cmr-mitm/    TLS-terminating control-channel proxy (capture real traffic)
 cmd/capdump/     decode an nv/m3 capture (-timeline, -stream C|S)
 cmd/m3dump/      recursively decode hex m3 frames
+cmd/cfgdump/     decode a config object graph (id30 write payload) as a chunk tree
 cmd/cmr-dial/    connect to a real controller as a client and decode replies
 cmd/cmr-learn/   earlier controller bring-up probe
 
@@ -141,6 +143,15 @@ controller does from `/cmr/vlan/add`. The write is an `id7` into
 (with the nonce/reqid nested *inside* the `id7`), pushed once the device reaches
 steady state (`-writedelay`). See
 [docs/re/figman/NV_SYNC_FINDINGS.md](docs/re/figman/NV_SYNC_FINDINGS.md). Run with
-`-writefile docs/samples/write-config-vlan100.hex`. The object graph pushed is a
-captured vlan-100 config; authoring an arbitrary graph from the `4a00c03f`/
-`c901c03f` object schema is the remaining work.
+`-writefile docs/samples/write-config-vlan100.hex`.
+
+That graph is **no longer a replay**: `pkg/cmr.BuildVLANConfig` authors it from a
+`VLANConfig{VLANID, BridgeName}`. The graph is a nested `m3` chunk stream (02 01 00
+header, objects of class `4a00c03f`/`c901c03f`, `02 00 00 01 <idx>` delimiters, a
+trailer); `BuildVLANConfig` parameterises the confirmed positions — the vlan id (a
+minimal-LE chunk) and the managed-bridge name — and carries the still-opaque
+schema fields verbatim. `cmd/cmr-ctrl -vlan 150 -bridgename athena-cmr` builds and
+writes it in-process, and a stock device builds the managed bridge accordingly
+(vlan ids 100/150/200/300 verified live). Mapping the remaining per-object fields
+(multiple vlans, wifi/device classes) is the next step — drive srv with varied
+`/cmr/…` config and diff the graphs.
