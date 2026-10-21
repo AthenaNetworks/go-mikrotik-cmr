@@ -32,11 +32,34 @@ Decoded symbols show how objects are typed and encoded:
 - `nv::IdTraits<...>` enumerates attribute categories: `message_id`, `raw_id`,
   `string_id`, `u32_array_id`, `u64_array_id`, `bool_array_id`, `addr6_array_id`,
   `string_array_id`, `message_array_id` — the type vocabulary for attributes.
-- `siphash` / `halfsiphash` are present (`_Z7siphash...`, `_Z11halfsiphash...`):
-  RouterOS hashes names here. The object **class ids are not hardcoded** in `cmr`
-  (`0x3fc0004a`/`0x3fc001c9` do not appear as constants) — they are namespaced
-  (`0x3fc0····` = the cmr type namespace) and derived, consistent with a
-  name→hash scheme. This is what makes a name-driven dictionary version-portable.
+- `siphash` / `halfsiphash` are defined in libumsg but have **no callers** in
+  the decompiled cmr/libumsg — they are NOT the type-id mechanism (likely PKEX /
+  MAC crypto). Correcting an earlier guess.
+
+### How type/attribute ids actually work (from the Ghidra decompile)
+
+Full decompiles: `scratchpad/{cmr,umsg}_decomp.txt` (2287 + ~3000 functions, via
+`analyzeHeadless` + a Java `DecompAll` script — Ghidra 12.x needs Java scripts,
+not Python/PyGhidra).
+
+- **The graph framing is generic.** All three objects in the vlan graph (root,
+  bridge, vlan) share class `0x3fc0004a` ("cfg entry") + `0x3fc001c9`
+  ("cfg value"). So these are not per-type ids — they are a generic config
+  entry/value wrapper. The actual type and attributes live in the object's
+  **nv columns**.
+- **Stores register by name with a column count** (`FUN_08052c55` in cmr):
+  `AMap::AMap("/nova/store/cmr/<type>", <ncols>, 1, -2, …)` —
+  `vlan`=0x14, `dev`=0x13, `alert`=0x15, `layout`=0x16, `wifinet`=0x17,
+  `wifiradio`=0x19, `laynode`/`laylink`=0x17; `upgrade`/`upgrade/job` are `AOmap`
+  (ordered maps). The class id and column ids are assigned by the nv base class
+  (`AMap`/`Store` in libumsg, `nv::getType`), **at runtime, not stored as
+  constants** (confirmed: the ids don't appear as constants in cmr, libumsg, or
+  the `.mem`, and the `.mem` is pure CLI syntax — names/types/help, no nv ids).
+- So the per-type **dictionary is the nv column schema**: for each store, the
+  ordered columns (name → type → the value encoding in the object body). The
+  object body is a positional/column encoding under the generic wrapper, not a
+  tagged (id,value) stream, which is why single-vlan decoded as opaque positional
+  chunks.
 
 ## Two schema layers
 
@@ -62,15 +85,22 @@ Decoded symbols show how objects are typed and encoded:
 - **device**: identity, board, version, channel, upgrade-rule.
 - **upgrade**: rule, job, version, check-interval.
 
-## Tool roadmap
+## Tool roadmap (revised after the decompile)
 
-1. `.mem` parser → emit the config model as JSON (menu → params → type), keyed by
-   firmware version. Re-runs on any RouterOS build's cmr `.mem`.
-2. nv id resolver: confirm the name→id derivation (siphash key + input form) so
-   each attribute/class name maps to its graph id; fall back to extracting the
-   registration table from `cmr`/`libumsg` where not hashed.
-3. Generalise `pkg/cmr.BuildVLANConfig` into a schema-driven encoder: build any
+1. **Decode the nv column serialization** in libumsg (`Store`/`AMap` + the
+   object read/write path: `getObject`, `storeObj`, `cmdGetAll`) to learn how a
+   store's columns map to the positional fields in the object body. This is the
+   real "name→id/field" step — the ids are column slots assigned by the nv base
+   class, so read them from the registration/serialization, not from a hash.
+2. **`.mem` parser** → emit the CLI config model as JSON (menu → params → type),
+   keyed by firmware version — the names/types/structure half of the dictionary.
+3. **Correlate** (1)+(2): per store, {column name (from .mem) → position/type (from
+   nv) → value encoding}. That is the authoring dictionary.
+4. Generalise `pkg/cmr.BuildVLANConfig` into a schema-driven encoder: build any
    object graph from `{type, attrs}` using the dictionary.
+
+Decompiles are checked in to the scratchpad; step 1 is pure analysis of
+`umsg_decomp.txt` and needs no lab.
 
 Lab reality: multi-vlan/wifi can't be *validated* on CHR (no 2nd switch port
 semantics, no radio), but the schema-driven encoder can be built and unit-tested
