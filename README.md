@@ -66,6 +66,7 @@ cmd/cmr-mitm/    TLS-terminating control-channel proxy (capture real traffic)
 cmd/capdump/     decode an nv/m3 capture (-timeline, -stream C|S)
 cmd/m3dump/      recursively decode hex m3 frames
 cmd/cfgdump/     decode a config object graph (id30 write payload) as a chunk tree
+cmd/cmr-schema/  extract the config dictionary (nv id -> name -> type) from a RouterOS .mem
 cmd/cmr-dial/    connect to a real controller as a client and decode replies
 cmd/cmr-learn/   earlier controller bring-up probe
 

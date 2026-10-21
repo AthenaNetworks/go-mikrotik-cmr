@@ -85,22 +85,42 @@ not Python/PyGhidra).
 - **device**: identity, board, version, channel, upgrade-rule.
 - **upgrade**: rule, job, version, check-interval.
 
-## Tool roadmap (revised after the decompile)
+## SOLVED: name ↔ id ↔ type is the compiled console schema
 
-1. **Decode the nv column serialization** in libumsg (`Store`/`AMap` + the
-   object read/write path: `getObject`, `storeObj`, `cmdGetAll`) to learn how a
-   store's columns map to the positional fields in the object body. This is the
-   real "name→id/field" step — the ids are column slots assigned by the nv base
-   class, so read them from the registration/serialization, not from a hash.
-2. **`.mem` parser** → emit the CLI config model as JSON (menu → params → type),
-   keyed by firmware version — the names/types/structure half of the dictionary.
-3. **Correlate** (1)+(2): per store, {column name (from .mem) → position/type (from
-   nv) → value encoding}. That is the authoring dictionary.
-4. Generalise `pkg/cmr.BuildVLANConfig` into a schema-driven encoder: build any
-   object graph from `{type, attrs}` using the dictionary.
+The nv attribute ids are **not hashed and not column-serialized from scratch** —
+they are stored verbatim in the compiled console schema (`.mem`), right next to
+the attribute name and a type descriptor. The console needs them to issue nv
+commands, and they are the *same* ids the cmr/libumsg code addresses with
+`message::get/insert<nv::TYPE_id>(msg, id)` (verified: `0x2007`=`security.ft`,
+`0x2103`=`channel`, `0x2600`=`starts-in`, `0x2203..06`=critical/high/medium/low).
 
-Decompiles are checked in to the scratchpad; step 1 is pure analysis of
-`umsg_decomp.txt` and needs no lab.
+The `.mem` is a flat array of property records:
+
+```
+[type-descriptor ptr : 4][kind = 0x00040008 : 4][nv id : 4][name]
+```
+
+`name` is inline NUL-terminated or a `0x50800000`-based pointer into the string
+pool. Six distinct type-descriptor pointers appear (u32 / flag / string / u32ro /
+mac / misc). `cmd/cmr-schema` parses this and emits the dictionary; the extracted
+7.26beta1 dictionary (195 attributes) is in `cmr-schema-7.26beta1.txt`. It re-runs
+on any firmware's `.mem`, so **the dictionary grows with new versions by design.**
+
+Full decompiles used to confirm this: `scratchpad/{cmr,umsg}_decomp.txt`
+(`analyzeHeadless` + Java `DecompAll` — Ghidra 12.x needs Java scripts, not
+PyGhidra). The attribute accessors there are `message::get<nv::TYPE_id>(msg, ID)`,
+so the object body is an m3-folded (id, value) stream under the generic
+`0x3fc0004a`/`0x3fc001c9` wrapper, not opaque positional data.
+
+## Remaining work
+
+1. **Coverage:** the flat scan gets 195 attributes; walk the menu tree and all
+   console `.mem` files for the full set (e.g. the dotted `security.*/channel.*`
+   that live deeper in the tree), and resolve the 6 type descriptors to exact nv
+   types by cross-referencing the typed accessors.
+2. **Schema-driven encoder:** fold the dictionary into `pkg/cmr` so
+   `BuildVLANConfig` generalises to `{type, {attr: value}}` → object graph, using
+   the id+type per attribute.
 
 Lab reality: multi-vlan/wifi can't be *validated* on CHR (no 2nd switch port
 semantics, no radio), but the schema-driven encoder can be built and unit-tested
