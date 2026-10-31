@@ -80,9 +80,12 @@ cmd/cmr-learn/   earlier controller bring-up probe
 docs/            protocol notes
 ```
 
-`pkg/pkex` and `pkg/pairing` are earlier exploratory code built against a
-UDP/PKEX enrollment model that predates the live TLS findings; they do not
-drive the real protocol and are retained only for reference.
+`pkg/pkex` and `pkg/pairing` are not used by the live open-pairing flow (which
+is TLS + an id10 `status=0x00` SUCCESS, no password). They are the
+reverse-engineered PKEX/DPP password handshake — `pkg/pairing` the P-256 + SIV
+crypto, `pkg/pkex` the session/frame layer from the earlier UDP enrollment
+model — retained as the head start for MikroTik's password-protected pairing
+(the `status=0x02` "password required" path the open flow never enters).
 
 ## Build
 
