@@ -1,0 +1,344 @@
+package controller
+
+import (
+	"context"
+	"crypto/tls"
+	"encoding/hex"
+	"errors"
+	"log/slog"
+	"net"
+	"sync"
+	"time"
+
+	"github.com/athenanetworks/cmr-server/pkg/cmr"
+	"github.com/athenanetworks/cmr-server/pkg/m3"
+)
+
+// Session is one device's control-channel connection. It is created by the
+// Server; interact with the device through its methods, which are safe for
+// concurrent use.
+type Session struct {
+	srv  *Server
+	tc   *tls.Conn
+	peer string
+	in   *m3.StreamDecoder
+
+	mu       sync.Mutex // serialises writes to tc and the paired/wroteCfg state
+	discSeq  []byte     // last discovery/resync outer id21, echoed in verAck
+	devFlag  byte       // device's query flag; pushed objects must echo it
+	paired   bool
+	wroteCfg bool
+
+	objMu   sync.Mutex
+	objects []Object
+}
+
+// Object is a device-reported management object (the read path): its handle and
+// flags plus the decoded key/value content the device reports about itself.
+type Object struct {
+	FieldID  uint32     // the frame opcode that carried it (id0/id1/id9)
+	Handle   []byte     // object handle (id21)
+	Flag     []byte     // object flag (id29)
+	Index    []byte     // object index (id64)
+	Key      cmr.Object // decoded key object (class, strings, MACs)
+	Value    cmr.Object // decoded value object (may be empty)
+	RawKey   []byte
+	RawValue []byte
+}
+
+// Peer returns the device's remote address.
+func (s *Session) Peer() string { return s.peer }
+
+// DevFlag returns the device's query flag (0 until its discovery arrives).
+func (s *Session) DevFlag() byte {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.devFlag
+}
+
+// Paired reports whether the device has been promoted to paired (SUCCESS sent).
+func (s *Session) Paired() bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.paired
+}
+
+// Objects returns a snapshot of the objects the device has reported so far.
+func (s *Session) Objects() []Object {
+	s.objMu.Lock()
+	defer s.objMu.Unlock()
+	return append([]Object(nil), s.objects...)
+}
+
+// Send writes raw control frames to the device under the write lock. The device
+// decodes the controller->device direction as one continuous m3 stream, so the
+// lock keeps frames from interleaving mid-stream. Frame builders such as
+// GetAllQuery and SubscribeQuery produce suitable input.
+func (s *Session) Send(frames ...[]byte) error {
+	if len(frames) == 0 {
+		return nil
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.sendLocked(frames)
+}
+
+// sendLocked writes frames; the caller holds s.mu.
+func (s *Session) sendLocked(frames [][]byte) error {
+	for _, out := range frames {
+		s.srv.log.Debug("tx frame", "peer", s.peer, "len", len(out))
+		if _, err := s.tc.Write(out); err != nil {
+			s.srv.log.Warn("write failed", "peer", s.peer, "err", err)
+			return err
+		}
+	}
+	return nil
+}
+
+// WriteConfig pushes an id30 config object graph (e.g. from cmr.BuildVLANConfig)
+// into the device's own config scope. The device reconciles its managed config
+// to the graph. It uses the server's configured write scope and flag.
+func (s *Session) WriteConfig(graph []byte) error {
+	if len(graph) == 0 {
+		return errors.New("controller: empty config graph")
+	}
+	frame := buildWriteConfig(s.srv.cfg.writeScope(), s.srv.cfg.writeFlag(), graph)
+	s.srv.log.Info("config WRITE", "peer", s.peer, "scope", s.srv.cfg.writeScope(), "bytes", len(graph))
+	return s.Send(frame)
+}
+
+// handle runs the full control-channel lifecycle for one device connection.
+func (s *Server) handle(tc *tls.Conn) {
+	defer tc.Close()
+	sess := &Session{srv: s, tc: tc, peer: tc.RemoteAddr().String(), in: m3.NewStreamDecoder()}
+	s.track(sess)
+	defer s.untrack(sess)
+
+	s.log.Info("device connected", "peer", sess.peer)
+	if err := tc.Handshake(); err != nil {
+		s.log.Warn("TLS handshake failed", "peer", sess.peer, "err", err)
+		if s.cfg.OnDisconnect != nil {
+			s.cfg.OnDisconnect(sess, err)
+		}
+		return
+	}
+	st := tc.ConnectionState()
+	s.log.Info("TLS up", "peer", sess.peer, "version", st.Version, "cipher", st.CipherSuite)
+	if s.cfg.OnConnect != nil {
+		s.cfg.OnConnect(sess)
+	}
+
+	// Keep the control channel alive; the device holds "connected" as long as this
+	// socket is up and stays silent when idle.
+	if tcp, ok := tc.NetConn().(*net.TCPConn); ok {
+		tcp.SetKeepAlive(true)
+		tcp.SetKeepAlivePeriod(25 * time.Second)
+	}
+
+	buf := make([]byte, 16384)
+	for {
+		if s.cfg.IdleTimeout > 0 {
+			tc.SetReadDeadline(time.Now().Add(s.cfg.IdleTimeout))
+		} else {
+			tc.SetReadDeadline(time.Time{})
+		}
+		n, err := tc.Read(buf)
+		if n > 0 {
+			sess.in.Feed(buf[:n])
+			for {
+				f, ok := sess.in.Next()
+				if !ok {
+					break
+				}
+				s.logFrame(sess, f)
+				wasPaired := sess.Paired()
+				frames := sess.step(f)
+				if len(frames) > 0 {
+					sess.mu.Lock()
+					werr := sess.sendLocked(frames)
+					sess.mu.Unlock()
+					if werr != nil {
+						break
+					}
+				}
+				// Fire OnPair once, after the SUCCESS frame is on the wire, so a
+				// callback that sends further frames (e.g. a getall) orders after it.
+				if !wasPaired && sess.Paired() && s.cfg.OnPair != nil {
+					s.cfg.OnPair(sess)
+				}
+			}
+		}
+		if err != nil {
+			s.log.Info("connection ended", "peer", sess.peer, "err", err, "buffered", sess.in.Buffered())
+			if s.cfg.OnDisconnect != nil {
+				s.cfg.OnDisconnect(sess, err)
+			}
+			return
+		}
+	}
+}
+
+func (s *Server) logFrame(sess *Session, f m3.Field) {
+	if !s.log.Enabled(context.Background(), slog.LevelDebug) {
+		return
+	}
+	s.log.Debug("rx frame", "peer", sess.peer, "id", f.ID, "len", len(f.Value),
+		"hex", hex.EncodeToString(f.Value), "dump", m3.Dump(f.Value, 6))
+}
+
+// step maps one top-level device field to the controller's reply frames.
+func (s *Session) step(f m3.Field) [][]byte {
+	srv := s.srv
+	// Object-bearing fields (id0/id1/id9 whose body carries an id74 key) are the
+	// device REPORTING state, not control frames — route them to the read path.
+	if f.ID == idDesc || f.ID == idVer || f.ID == idDev {
+		if body, _ := m3.Decode(f.Value); body != nil {
+			if _, ok := body.GetBytes(idKey); ok {
+				s.readObject(f, body)
+				return nil
+			}
+		}
+	}
+	switch f.ID {
+	case idHello: // C hello -> S hello
+		return [][]byte{serverHello()}
+
+	case idVer: // id1: version (has id25), the post-discovery nonce/seq, or an ack
+		if inner, _ := m3.Decode(f.Value); inner != nil {
+			if _, ok := inner.GetBytes(idBuildV); ok {
+				return [][]byte{serverVersion()} // C version -> S version
+			}
+		}
+		s.mu.Lock()
+		if s.paired {
+			s.mu.Unlock()
+			// Already paired: a bare id1{nonce,seq} is a control ack / keepalive.
+			// Absorb it — re-running the SUCCESS path would re-pair and storm.
+			return nil
+		}
+		// First post-discovery id1 -> verAck, then id10 SUCCESS (promotion to
+		// paired). SUCCESS alone pairs; roots ride the SUCCESS frame when known.
+		s.paired = true
+		discSeq := append([]byte(nil), s.discSeq...)
+		devFlag := s.devFlag
+		s.mu.Unlock()
+
+		out := [][]byte{verAck(discSeq, 0x01)}
+		if len(srv.cfg.Roots) > 0 && devFlag != 0 {
+			out = append(out, successWithRootsFrame(srv.cfg.Roots, devFlag))
+			srv.log.Info("paired (SUCCESS+roots)", "peer", s.peer, "flag", devFlag)
+		} else {
+			out = append(out, successFrame())
+			srv.log.Info("paired (SUCCESS)", "peer", s.peer)
+		}
+		// OnPair fires from the read loop once these frames are on the wire.
+		// AutoWrite: once paired and the device's query flag is known (the real
+		// sync connection), push the config graph after the device settles.
+		if len(srv.cfg.AutoWrite) > 0 && devFlag != 0 {
+			go s.autoWriteTimer()
+		}
+		return out
+
+	case idDisc, idResync: // C discovery/resync -> S ack; remember seq + flag
+		if inner, _ := m3.Decode(f.Value); inner != nil {
+			if b, ok := inner.GetBytes(idSeq); ok {
+				s.mu.Lock()
+				s.discSeq = append([]byte(nil), b...)
+				s.mu.Unlock()
+			}
+			// The device's query carries an id29 flag inside its nested id4 that the
+			// controller MUST echo in every object it pushes, or the device rejects
+			// them "not found". Capture it here.
+			if q, ok := inner.GetNested(idQuery); ok {
+				if b, ok := q.GetBytes(idDevFl); ok && len(b) == 1 {
+					s.mu.Lock()
+					s.devFlag = b[0]
+					s.mu.Unlock()
+				}
+			}
+		}
+		if f.ID == idResync {
+			// A resync (id7) is the device's getall for the controller's scope; a
+			// real controller answers it by streaming its config id9 burst, which is
+			// what makes the device reciprocate with its own state dump.
+			if len(srv.cfg.ConfigBurst) > 0 {
+				flag := s.DevFlag()
+				srv.log.Info("getall -> config burst", "peer", s.peer, "bytes", len(srv.cfg.ConfigBurst), "flag", flag)
+				return [][]byte{patchObjectFlag(srv.cfg.ConfigBurst, flag)}
+			}
+			return nil
+		}
+		return [][]byte{discAck(0x15)}
+
+	case idDesc: // id0: device descriptor, config object, or an error report
+		if body, _ := m3.Decode(f.Value); body != nil {
+			if b, ok := body.GetBytes(idStatus); ok && len(b) == 1 && b[0] != 0 {
+				srv.log.Info("device status report", "peer", s.peer, "status", b[0], "msg", strField(body, 28))
+			}
+			if cmr.IsDescriptor(body) {
+				if d, err := cmr.ParseDescriptor(f.Value); err == nil {
+					srv.log.Info("device descriptor", "peer", s.peer, "descriptor", d.String())
+				}
+			}
+		}
+		return nil
+
+	default:
+		return nil
+	}
+}
+
+// autoWriteTimer waits for the device to reach steady state, then pushes the
+// configured AutoWrite graph exactly once per connection.
+func (s *Session) autoWriteTimer() {
+	time.Sleep(s.srv.cfg.writeDelay())
+	s.mu.Lock()
+	already := s.wroteCfg
+	s.wroteCfg = true
+	s.mu.Unlock()
+	if already {
+		return
+	}
+	if err := s.WriteConfig(s.srv.cfg.AutoWrite); err != nil {
+		s.srv.log.Warn("auto-write failed", "peer", s.peer, "err", err)
+	}
+}
+
+// readObject records a device-reported object and fires the OnObject callback.
+func (s *Session) readObject(f m3.Field, body *m3.Message) {
+	handle, _ := body.GetBytes(idSeq)
+	flagb, _ := body.GetBytes(idDevFl)
+	idxb, _ := body.GetBytes(idDevIx)
+	key, _ := body.GetBytes(idKey)
+	val, _ := body.GetBytes(idVal)
+	obj := Object{
+		FieldID:  f.ID,
+		Handle:   handle,
+		Flag:     flagb,
+		Index:    idxb,
+		RawKey:   key,
+		RawValue: val,
+	}
+	if len(key) > 0 {
+		obj.Key = cmr.ParseObject(key)
+	}
+	if len(val) > 0 {
+		obj.Value = cmr.ParseObject(val)
+	}
+	s.objMu.Lock()
+	s.objects = append(s.objects, obj)
+	s.objMu.Unlock()
+
+	s.srv.log.Info("device object", "peer", s.peer, "id", f.ID,
+		"handle", hex.EncodeToString(handle), "key", obj.Key.String())
+	if s.srv.cfg.OnObject != nil {
+		s.srv.cfg.OnObject(s, obj)
+	}
+}
+
+func strField(m *m3.Message, id uint32) string {
+	if b, ok := m.GetBytes(id); ok {
+		return string(b)
+	}
+	return ""
+}

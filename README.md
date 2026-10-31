@@ -24,6 +24,7 @@ and research project.
 | Config **write** driven live by **our** controller | **Working, verified live** — `cmd/cmr-ctrl -writefile` makes a stock device build a MANAGED `cmr-bridge` (vlan-filtering, `ether1` pvid=100), no RouterOS controller in the path; see [Protocol notes](#protocol-notes) |
 | CMR vlan config **authored from structured input** (not replayed) | **Working, verified live** — `pkg/cmr.BuildVLANConfig` constructs the object graph; `cmd/cmr-ctrl -vlan N -bridgename X` pushes it and the device builds the bridge with the chosen vlan id + name (100/150/200/300 verified on the wire) |
 | Config graph **codec** (author, decode, round-trip) + attribute dictionary | **Working** — `pkg/cmr.Graph`/`DecodeGraph`/`Encode` round-trip a graph byte-for-byte; `ParseVLANConfig` is the inverse of `BuildVLANConfig`; the 410-attribute dictionary (`cmd/cmr-schema`) is embedded and queryable via `Attrs`/`AttrByName`/`AttrByID`; `cfgdump -tree` decodes structurally |
+| **Embeddable controller library** (`pkg/controller`) | **Working** — `controller.New(Config).ListenAndServe()` runs the whole pairing + object-sync + config-write state machine with `OnConnect`/`OnPair`/`OnObject` callbacks and `Session.WriteConfig`; `cmd/cmr-ctrl` is a thin wrapper over it; bring-up covered by an in-process integration test |
 
 The controller currently implements the **open pairing** path. Password (PKEX)
 pairing is a custom, TLS-channel-bound EC+HMAC PAKE inside `ssld` and is out of
@@ -58,7 +59,9 @@ See [docs/OPEN_PAIRING.md](docs/OPEN_PAIRING.md) and
 ## Layout
 
 ```
-cmd/cmr-ctrl/    the controller a real device pairs+connects to (primary)
+pkg/controller/  embeddable CMR controller: a stock device pairs+connects to it (the server library)
+cmd/cmr-ctrl/    thin CLI over pkg/controller (the self-hosted daemon)
+examples/embed/  minimal program embedding the controller in another project
 pkg/m3/          byte-exact nv/m3 codec + continuous StreamDecoder
 pkg/cmr/         control-plane object model, config graph codec (Graph/BuildVLANConfig/DecodeGraph) + embedded attribute dictionary
 pkg/mtls/        minimal cert-tolerant TLS 1.2 client
@@ -102,8 +105,34 @@ On the device:
 ```
 
 The controller is open-pairing, so the password is ignored; the command still
-requires one. `-v` logs a full recursive decode of every frame; `-idle 0`
-(default) holds idle connections open.
+requires one. `-v` raises logging to Debug (every frame, recursively decoded);
+`-idle 0` (default) holds idle connections open.
+
+## Embedding
+
+`cmd/cmr-ctrl` is a thin CLI over `pkg/controller`; any Go program can run the
+same controller in-process. The whole integration surface is a `Config` and a
+few callbacks:
+
+```go
+cert, _ := controller.Identity("ctrl.ed25519.seed") // persistent pinned identity
+srv, _ := controller.New(controller.Config{
+    Certificate: cert,
+    Logger:      slog.Default(),
+    AutoWrite:   cmr.BuildVLANConfig(cmr.VLANConfig{VLANID: 100}), // pushed to each device once it pairs
+    OnObject: func(s *controller.Session, o controller.Object) {   // device inventory as it arrives
+        log.Printf("%s: %s", s.Peer(), o.Key)
+    },
+})
+srv.ListenAndServe("0.0.0.0:54321")
+```
+
+`Session.WriteConfig(graph)` pushes config to a device at any time; `srv.Sessions()`
+lists the connected devices. See [examples/embed](examples/embed/main.go). The
+captured controller scaffold objects (`docs/samples/controller-{roots,config}.hex`)
+are supplied via `Config.Roots` / `Config.ConfigBurst` to drive the device's full
+state dump; synthesising those from structured state (as `pkg/cmr` already does
+for the config-write graph) is the next step toward a fully self-describing server.
 
 ## Protocol notes
 
