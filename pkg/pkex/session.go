@@ -23,7 +23,7 @@ type Config struct {
 }
 
 // Session runs one peer handshake to completion. It is not safe for concurrent
-// use; the owner (see pkg/server) serializes frames per peer.
+// use; the owning session runner serializes frames per peer.
 type Session struct {
 	cfg      Config
 	ctx      Context

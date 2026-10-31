@@ -80,10 +80,9 @@ cmd/cmr-learn/   earlier controller bring-up probe
 docs/            protocol notes
 ```
 
-`pkg/pkex`, `pkg/pairing`, `pkg/model`, `pkg/transport`, `pkg/server` and
-`cmd/cmr-server` are earlier exploratory code built against a UDP/PKEX model
-that predates the live TLS findings; they do not drive the real protocol and
-are retained only for reference.
+`pkg/pkex` and `pkg/pairing` are earlier exploratory code built against a
+UDP/PKEX enrollment model that predates the live TLS findings; they do not
+drive the real protocol and are retained only for reference.
 
 ## Build
 
