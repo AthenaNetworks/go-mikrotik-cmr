@@ -24,7 +24,8 @@ and research project.
 | Config **write** driven live by **our** controller | **Working, verified live** — `cmd/cmr-ctrl -writefile` makes a stock device build a MANAGED `cmr-bridge` (vlan-filtering, `ether1` pvid=100), no RouterOS controller in the path; see [Protocol notes](#protocol-notes) |
 | CMR vlan config **authored from structured input** (not replayed) | **Working, verified live** — `pkg/cmr.BuildVLANConfig` constructs the object graph; `cmd/cmr-ctrl -vlan N -bridgename X` pushes it and the device builds the bridge with the chosen vlan id + name (100/150/200/300 verified on the wire) |
 | Config graph **codec** (author, decode, round-trip) + attribute dictionary | **Working** — `pkg/cmr.Graph`/`DecodeGraph`/`Encode` round-trip a graph byte-for-byte; `ParseVLANConfig` is the inverse of `BuildVLANConfig`; the 410-attribute dictionary (`cmd/cmr-schema`) is embedded and queryable via `Attrs`/`AttrByName`/`AttrByID`; `cfgdump -tree` decodes structurally |
-| **Embeddable controller library** (`pkg/controller`) | **Working** — `controller.New(Config).ListenAndServe()` runs the whole pairing + object-sync + config-write state machine with `OnConnect`/`OnPair`/`OnObject` callbacks and `Session.WriteConfig`; `cmd/cmr-ctrl` is a thin wrapper over it; bring-up covered by an in-process integration test |
+| **Embeddable controller library** (`pkg/controller`) | **Working** — `controller.New(Config).ListenAndServe()` runs the whole pairing + object-sync + config-write state machine with `OnConnect`/`OnPair`/`OnObject`/`OnIdentify` callbacks and `Session.WriteConfig`; `cmd/cmr-ctrl` is a thin wrapper over it; bring-up covered by an in-process integration test |
+| **Multi-device registry + persistence** | **Working** — a `Store` (JSON `FileStore` provided) makes the server identify each device by a stable key (MAC), track it (`Devices`/`Device`), persist enrolments + per-device desired config across restarts, and re-apply a device's config on reconnect; `SetDesiredConfig(id, graph)` drives one device; covered by an end-to-end reconcile test |
 
 The controller currently implements the **open pairing** path. Password (PKEX)
 pairing is a custom, TLS-channel-bound EC+HMAC PAKE inside `ssld` and is out of
@@ -128,7 +129,12 @@ srv.ListenAndServe("0.0.0.0:54321")
 ```
 
 `Session.WriteConfig(graph)` pushes config to a device at any time; `srv.Sessions()`
-lists the connected devices. See [examples/embed](examples/embed/main.go). The
+lists the connected devices. Add a `Store` (a JSON `FileStore` is provided) to make
+the server multi-device: it identifies each device by a stable key, tracks it
+(`srv.Devices()` / `srv.Device(id)`), persists enrolments and per-device desired
+config across restarts, and re-applies a device's config whenever it reconnects;
+`srv.SetDesiredConfig(id, graph)` drives one device by id (e.g. from an admin
+handler). See [examples/embed](examples/embed/main.go). The
 captured controller scaffold objects (`docs/samples/controller-{roots,config}.hex`)
 are supplied via `Config.Roots` / `Config.ConfigBurst` to drive the device's full
 state dump; synthesising those from structured state (as `pkg/cmr` already does

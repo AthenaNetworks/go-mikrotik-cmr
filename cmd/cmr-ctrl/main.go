@@ -37,6 +37,8 @@ func main() {
 	writeFlag := flag.Uint("writeflag", controller.DefaultWriteFlag, "id29 flag byte for the config-write id7")
 	writeDelay := flag.Duration("writedelay", controller.DefaultWriteDelay, "delay after pairing before the config WRITE (let the device reach steady state)")
 
+	registry := flag.String("registry", "", "path to a JSON device registry (enables multi-device tracking + persistence; -vlan/-writefile become the default config for devices without their own)")
+
 	enumScope := flag.String("enum", "", "after pairing, send an id7 getall for this scope (e.g. com.mikrotik.cmr)")
 	enumFlag := flag.Uint("enumflag", 0x18, "id29 flag byte for the -enum getall")
 	enumSel := flag.String("enumsel", "", "hex id30 selector for the -enum getall (empty = none)")
@@ -65,6 +67,10 @@ func main() {
 		WriteScope:  *writeScope,
 		WriteFlag:   byte(*writeFlag),
 		WriteDelay:  *writeDelay,
+	}
+	if *registry != "" {
+		cfg.Store = controller.NewFileStore(*registry)
+		logger.Info("device registry enabled", "path", *registry)
 	}
 
 	switch {

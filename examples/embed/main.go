@@ -1,8 +1,8 @@
-// Command embed shows how another project runs a CMR controller in-process with
-// pkg/controller: a stock MikroTik device pairs over open pairing, the program
-// prints what the device reports about itself, and pushes a vlan config once the
-// device reaches steady state. This whole file is the integration surface — an
-// application swaps the callbacks for its own device registry and config source.
+// Command embed shows how another project runs a multi-device CMR controller
+// in-process with pkg/controller: stock MikroTik devices pair over open pairing,
+// the server identifies and persists each one in a registry, and pushes a
+// per-device vlan config. This whole file is the integration surface — an
+// application swaps the callbacks and config policy for its own.
 package main
 
 import (
@@ -24,24 +24,28 @@ func main() {
 		os.Exit(1)
 	}
 
+	// A registry (any Store) makes the server multi-device: it identifies each
+	// device by a stable key, tracks it, and persists enrolments + desired config.
+	store := controller.NewFileStore("devices.json")
+
 	srv, err := controller.New(controller.Config{
 		Certificate: cert,
 		Logger:      logger,
+		Store:       store,
 
-		// Push vlan 100 into every device that pairs, once it is steady. For
-		// dynamic, per-device config call Session.WriteConfig from a callback or
-		// from your own control loop over srv.Sessions() instead.
-		AutoWrite: cmr.BuildVLANConfig(cmr.VLANConfig{VLANID: 100, BridgeName: "cmr-bridge"}),
-
-		// React to the device as it reports its inventory (interfaces, identity,
-		// board, config objects). This is where an app builds its device registry.
-		OnObject: func(s *controller.Session, o controller.Object) {
-			if len(o.Key.Strings) > 0 {
-				logger.Info("device object", "peer", s.Peer(), "class", cmr.ClassName(o.Key.Class), "strings", o.Key.Strings)
+		// When a device is identified (first time per connection), decide its
+		// config. Here every device gets vlan 100; a real app would look up the
+		// device's role. SetDesiredConfig persists it and, since the device is
+		// connected, pushes it now; on later reconnects it is re-applied from the
+		// registry automatically.
+		OnIdentify: func(s *controller.Session, d controller.Device) {
+			logger.Info("device identified", "id", d.ID, "board", d.Board, "mac", d.MAC)
+			if len(d.DesiredConfig) == 0 {
+				_ = s.WriteConfig(cmr.BuildVLANConfig(cmr.VLANConfig{VLANID: 100}))
 			}
 		},
 		OnDisconnect: func(s *controller.Session, err error) {
-			logger.Info("device gone", "peer", s.Peer(), "objects_seen", len(s.Objects()))
+			logger.Info("device gone", "peer", s.Peer(), "id", s.DeviceID())
 		},
 	})
 	if err != nil {
@@ -49,8 +53,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	logger.Info("cmr controller embedded; point a device at this host:54321",
-		"fingerprint", controller.Fingerprint(cert))
+	// srv.Devices() lists every known device (connected or not); srv.Device(id)
+	// and srv.SetDesiredConfig(id, graph) drive one by its stable id — e.g. from
+	// an HTTP admin handler or a control loop.
+	logger.Info("cmr controller embedded; point devices at this host:54321",
+		"fingerprint", controller.Fingerprint(cert), "known_devices", len(srv.Devices()))
 	if err := srv.ListenAndServe("0.0.0.0:54321"); err != nil {
 		logger.Error("serve", "err", err)
 		os.Exit(1)

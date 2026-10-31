@@ -23,11 +23,14 @@ type Session struct {
 	peer string
 	in   *m3.StreamDecoder
 
-	mu       sync.Mutex // serialises writes to tc and the paired/wroteCfg state
-	discSeq  []byte     // last discovery/resync outer id21, echoed in verAck
-	devFlag  byte       // device's query flag; pushed objects must echo it
-	paired   bool
-	wroteCfg bool
+	mu              sync.Mutex // serialises writes to tc and the mutable state below
+	discSeq         []byte     // last discovery/resync outer id21, echoed in verAck
+	devFlag         byte       // device's query flag; pushed objects must echo it
+	paired          bool
+	wroteCfg        bool           // the config push has happened this connection
+	configScheduled bool           // the config-push timer has been started
+	devID           DeviceID       // registry key, once identified (registry mode)
+	descr           cmr.DeviceInfo // last descriptor the device reported
 
 	objMu   sync.Mutex
 	objects []Object
@@ -61,6 +64,23 @@ func (s *Session) Paired() bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return s.paired
+}
+
+// DeviceID returns the session's registry key, or "" until the device is
+// identified (only populated in registry mode).
+func (s *Session) DeviceID() DeviceID {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.devID
+}
+
+// Device returns the identified device's registry record, if any.
+func (s *Session) Device() (Device, bool) {
+	id := s.DeviceID()
+	if id == "" {
+		return Device{}, false
+	}
+	return s.srv.Device(id)
 }
 
 // Objects returns a snapshot of the objects the device has reported so far.
@@ -170,6 +190,9 @@ func (s *Server) handle(tc *tls.Conn) {
 		}
 		if err != nil {
 			s.log.Info("connection ended", "peer", sess.peer, "err", err, "buffered", sess.in.Buffered())
+			if id := sess.DeviceID(); id != "" {
+				s.markDisconnected(id)
+			}
 			if s.cfg.OnDisconnect != nil {
 				s.cfg.OnDisconnect(sess, err)
 			}
@@ -231,12 +254,10 @@ func (s *Session) step(f m3.Field) [][]byte {
 			out = append(out, successFrame())
 			srv.log.Info("paired (SUCCESS)", "peer", s.peer)
 		}
-		// OnPair fires from the read loop once these frames are on the wire.
-		// AutoWrite: once paired and the device's query flag is known (the real
-		// sync connection), push the config graph after the device settles.
-		if len(srv.cfg.AutoWrite) > 0 && devFlag != 0 {
-			go s.autoWriteTimer()
-		}
+		// OnPair fires from the read loop once these frames are on the wire. The
+		// config push is scheduled here (simple/AutoWrite mode) or once the device
+		// is identified (registry mode); see maybeScheduleConfig.
+		s.maybeScheduleConfig()
 		return out
 
 	case idDisc, idResync: // C discovery/resync -> S ack; remember seq + flag
@@ -278,6 +299,13 @@ func (s *Session) step(f m3.Field) [][]byte {
 			if cmr.IsDescriptor(body) {
 				if d, err := cmr.ParseDescriptor(f.Value); err == nil {
 					srv.log.Info("device descriptor", "peer", s.peer, "descriptor", d.String())
+					s.mu.Lock()
+					s.descr = d
+					id := s.devID
+					s.mu.Unlock()
+					if id != "" { // enrich an already-identified record
+						srv.upsertDevice(id, "", d)
+					}
 				}
 			}
 		}
@@ -288,20 +316,96 @@ func (s *Session) step(f m3.Field) [][]byte {
 	}
 }
 
-// autoWriteTimer waits for the device to reach steady state, then pushes the
-// configured AutoWrite graph exactly once per connection.
-func (s *Session) autoWriteTimer() {
+// maybeScheduleConfig starts the one-shot config push once the device is ready:
+// paired, its query flag known, and — in registry mode — identified. It is
+// idempotent, so it can be called both at pairing and at identification.
+func (s *Session) maybeScheduleConfig() {
+	s.mu.Lock()
+	ready := s.paired && !s.configScheduled && s.devFlag != 0
+	if ready && s.srv.registryEnabled() {
+		ready = s.devID != ""
+	}
+	if !ready {
+		s.mu.Unlock()
+		return
+	}
+	s.configScheduled = true
+	s.mu.Unlock()
+	go s.configTimer()
+}
+
+// configTimer waits for the device to reach steady state, then pushes its config
+// exactly once per connection.
+func (s *Session) configTimer() {
 	time.Sleep(s.srv.cfg.writeDelay())
+	graph := s.configToApply()
+	if len(graph) == 0 {
+		return
+	}
 	s.mu.Lock()
 	already := s.wroteCfg
-	s.wroteCfg = true
 	s.mu.Unlock()
 	if already {
 		return
 	}
-	if err := s.WriteConfig(s.srv.cfg.AutoWrite); err != nil {
-		s.srv.log.Warn("auto-write failed", "peer", s.peer, "err", err)
+	if err := s.applyConfig(graph); err != nil {
+		s.srv.log.Warn("config push failed", "peer", s.peer, "err", err)
 	}
+}
+
+// configToApply returns the config graph to push: in registry mode the
+// identified device's DesiredConfig, falling back to AutoWrite as the default for
+// a device with none; in simple mode, AutoWrite for every device.
+func (s *Session) configToApply() []byte {
+	if s.srv.registryEnabled() {
+		if id := s.DeviceID(); id != "" {
+			if g := s.srv.desiredConfig(id); len(g) > 0 {
+				return g
+			}
+		}
+	}
+	return s.srv.cfg.AutoWrite
+}
+
+// applyConfig pushes graph and records that this connection has been configured.
+func (s *Session) applyConfig(graph []byte) error {
+	s.mu.Lock()
+	s.wroteCfg = true
+	s.mu.Unlock()
+	return s.WriteConfig(graph)
+}
+
+// identify derives the device's registry key from a reported object and records
+// it (registry mode only). On first identification this connection it enriches
+// the device record, fires OnIdentify, and schedules the config push.
+func (s *Session) identify(obj Object) {
+	if !s.srv.registryEnabled() {
+		return
+	}
+	s.mu.Lock()
+	if s.devID != "" {
+		s.mu.Unlock()
+		return
+	}
+	id, ok := s.srv.deviceKey(obj)
+	if !ok {
+		s.mu.Unlock()
+		return
+	}
+	s.devID = id
+	descr := s.descr
+	s.mu.Unlock()
+
+	mac := ""
+	if len(obj.Key.MACs) > 0 {
+		mac = obj.Key.MACs[0]
+	}
+	dev, _ := s.srv.upsertDevice(id, mac, descr)
+	s.srv.log.Info("device identified", "peer", s.peer, "id", id, "board", dev.Board)
+	if s.srv.cfg.OnIdentify != nil {
+		s.srv.cfg.OnIdentify(s, dev)
+	}
+	s.maybeScheduleConfig()
 }
 
 // readObject records a device-reported object and fires the OnObject callback.
@@ -334,6 +438,7 @@ func (s *Session) readObject(f m3.Field, body *m3.Message) {
 	if s.srv.cfg.OnObject != nil {
 		s.srv.cfg.OnObject(s, obj)
 	}
+	s.identify(obj)
 }
 
 func strField(m *m3.Message, id uint32) string {

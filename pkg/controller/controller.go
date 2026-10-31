@@ -101,11 +101,23 @@ type Config struct {
 	WriteFlag  byte          // config-write id29 flag; zero = DefaultWriteFlag
 	WriteDelay time.Duration // delay after pairing before AutoWrite; zero = DefaultWriteDelay
 
+	// Store persists the device registry (enrolments + each device's desired
+	// config) across restarts. When set — or when DeviceKey is set — the server is
+	// registry-driven: it identifies devices by a stable key, tracks them
+	// (Devices/Device) and pushes each device's DesiredConfig on connect, instead
+	// of the apply-to-all AutoWrite. Nil keeps the simple apply-to-all mode.
+	Store Store
+
+	// DeviceKey derives a stable DeviceID from a reported object; nil uses the
+	// first MAC the device reports. Setting it also enables the registry.
+	DeviceKey func(Object) (DeviceID, bool)
+
 	// Callbacks (all optional) run on the device's connection goroutine, so they
 	// must not block for long. Interact with the device through Session.
 	OnConnect    func(*Session)         // device connected, TLS up (not yet paired)
 	OnPair       func(*Session)         // device paired (SUCCESS sent)
 	OnObject     func(*Session, Object) // device reported an object (read path)
+	OnIdentify   func(*Session, Device) // device identified in the registry (first time this connection)
 	OnDisconnect func(*Session, error)  // connection ended
 }
 
@@ -141,9 +153,13 @@ type Server struct {
 	ln   net.Listener
 	sess map[*Session]struct{}
 	done bool
+
+	devMu   sync.Mutex
+	devices map[DeviceID]*Device
 }
 
-// New validates cfg and returns a Server ready to serve.
+// New validates cfg, loads the device registry (if a Store is configured) and
+// returns a Server ready to serve.
 func New(cfg Config) (*Server, error) {
 	if len(cfg.Certificate.Certificate) == 0 {
 		return nil, errors.New("controller: Config.Certificate is required (see Identity)")
@@ -152,7 +168,7 @@ func New(cfg Config) (*Server, error) {
 	if log == nil {
 		log = slog.New(slog.NewTextHandler(io.Discard, nil))
 	}
-	return &Server{
+	s := &Server{
 		cfg: cfg,
 		log: log,
 		tls: &tls.Config{
@@ -165,8 +181,13 @@ func New(cfg Config) (*Server, error) {
 			// fingerprint, not a TLS-layer client cert.
 			ClientAuth: tls.NoClientCert,
 		},
-		sess: make(map[*Session]struct{}),
-	}, nil
+		sess:    make(map[*Session]struct{}),
+		devices: make(map[DeviceID]*Device),
+	}
+	if err := s.loadRegistry(); err != nil {
+		return nil, err
+	}
+	return s, nil
 }
 
 // ListenAndServe listens on addr (TLS 1.2) and serves until Close.
