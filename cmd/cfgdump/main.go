@@ -6,7 +6,12 @@
 // graph is a vlan config, prints the ParseVLANConfig result. It is the inverse
 // view of pkg/cmr.BuildVLANConfig and the tool for diffing captured graphs.
 //
+// With -scope it instead prints the decoded controller config-scope catalog —
+// the named scaffold grammar (pkg/cmr.AnnotateConfigScope), one row per line —
+// and takes no argument.
+//
 //	cfgdump [-tree] <hexfile|hexstring>
+//	cfgdump -scope
 package main
 
 import (
@@ -59,9 +64,14 @@ func classLabel(b []byte) string {
 
 func main() {
 	tree := flag.Bool("tree", false, "decode structurally (objects and fields) via pkg/cmr.DecodeGraph")
+	scope := flag.Bool("scope", false, "print the decoded controller config-scope catalog (the named scaffold grammar)")
 	flag.Parse()
+	if *scope {
+		fmt.Print(cmr.AnnotateConfigScope())
+		return
+	}
 	if flag.NArg() < 1 {
-		fmt.Fprintln(os.Stderr, "usage: cfgdump [-tree] <hexfile|hexstring>")
+		fmt.Fprintln(os.Stderr, "usage: cfgdump [-tree] <hexfile|hexstring>\n       cfgdump -scope")
 		os.Exit(2)
 	}
 	src := flag.Arg(0)

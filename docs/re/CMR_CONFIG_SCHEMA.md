@@ -193,10 +193,70 @@ These were replayed from captured hex. They are now **synthesised from structure
   (`go generate ./pkg/cmr`). The server defaults to these, so it drives a device's
   dump with **no captured hex at runtime**; `Config.Roots`/`ConfigBurst` override.
 
-Not yet reversed: the per-object **semantics**. Keys (class + attr id) and the dozen
-distinct value type-refs (incl. the `0x07f00015`/`0x07f00009` config classes) are
-carried faithfully but mostly unnamed. Naming them is what would let the catalog be
-authored from a high-level controller config rather than a captured snapshot.
+### Config-scope object grammar (`pkg/cmr/scaffold_decode.go`) — DONE
+
+The per-object **grammar** is now fully reversed and named. `DecodeConfigScope()`
+turns the opaque chunk catalog into a `[]ScopeRow`; `AnnotateConfigScope()` /
+`cfgdump -scope` print it; and `TestDecodeConfigScopeLossless` proves the named
+model reconstructs the catalog **byte-for-byte** (so the naming loses nothing).
+
+Each row has a KEY and an optional VALUE.
+
+**Key** = `ClassConfig · attr(u16) · <descriptor> · <query>`, where `<descriptor>`
+is one of four forms and `<query>` is the trailing marker selecting which getall
+variant the row answers:
+
+| form     | descriptor                                             | used by     |
+|----------|--------------------------------------------------------|-------------|
+| `simple` | `0503`                                                 | most attrs  |
+| `nested` | `490040 · sub(u8) · class 0x3f800309 · ext · 85fd7f`   | attr 0x0014 |
+| `ext`    | `8dfa7f · 07 · 85fd7f`                                 | attr 0x048a |
+| `bare`   | *(none — just `ClassConfig · attr`)*                   | attr 0x0a8a |
+
+Query markers: `01` = **key-only** (these rows carry no value), `02` = a second
+value variant, `0400fe` = **full** (the full type signature). The same attribute
+can appear under several markers (e.g. 0x2658 appears key-only, v2 and full), and
+the whole set is enumerated **twice** (handles 0x26..0x36 then 0x47..0x56) — a
+getall followed by a re-enumeration.
+
+**Value** = a type signature. 26 of the 27 value-bearing rows carry the envelope
+
+```
+class(0x07f00015) · 0x07f80101 · <middle> · 0x07f80109 · 0x07f00019 · 0x07f000ad
+```
+
+where `<middle>` is the object's column list — a mix of 0x07f0-family **type
+references** and inline **column-id references** (e.g. `340008`, `4923`). One row
+(attr 0x0a8a) is a different object class (`0x07f00009`) with no envelope. The 12
+distinct type references and the two value classes are named as constants in
+`scaffold_decode.go` by their structural role.
+
+**The hard blocker — leaf ids are a runtime nv space.** What the grammar leaves
+numeric is the leaf id space: the 2-byte attribute ids, the inline column-id
+references, and the 0x07f0-family type handles. These are **not** the console
+schema ids (none of the attr ids resolve against `schema.json` in any byte order),
+and prior Ghidra RE already found the class/column ids are assigned by the nv base
+class at startup and stored nowhere static (not in `cmr`, `libumsg`, or the
+`.mem`). No capture carries a name string beside them (the controller advertises
+only the *shape* of its scope; the device answers by handle, not by name). So they
+are stable **by construction** — which is why byte-identical replay works — but
+cannot be mapped to human names from static material alone.
+
+Two paths could name the leaves, both needing hardware (lab is down):
+
+1. A **live getall that carries names** — capture a RouterOS console/API dump of
+   `com.mikrotik.cmr` that pairs each runtime id with its attribute name, giving a
+   direct id→name table for this firmware.
+2. **Type-signature fingerprinting** — match each row's column type signature
+   against the console schema's per-store column sets (the stores register with
+   known column counts: vlan=0x14, dev=0x13, alert=0x15, layout=0x16, wifinet=
+   0x17, wifiradio=0x19), to name rows at the store/type level even without a live
+   dump. The nested `attr 0x0014` row is the strongest candidate (it alone uses
+   the embedded sub-class and the richest column list).
+
+Because the ids are runtime-assigned and version-specific, the **engineering**
+answer for a new firmware is unchanged: re-capture and re-run `cmd/cmr-scaffold`.
+Naming the leaves is a comprehension/validation win, not a new authoring path.
 
 ## Remaining work
 

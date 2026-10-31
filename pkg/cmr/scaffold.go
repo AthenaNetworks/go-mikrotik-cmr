@@ -24,12 +24,18 @@ import "github.com/athenanetworks/cmr-server/pkg/m3"
 // so the synthesis is proven against the bytes a real controller sent and the
 // server no longer depends on the captured files at runtime.
 //
-// What is NOT yet reversed: the per-object semantics. The keys are an object
-// class (ClassConfig) + a 2-byte attribute id + a marker; the values are lists of
-// 0x07f0-family type references (RefChunk) and inline values. These are carried
-// faithfully but mostly unnamed — naming them is the next RE step and would let
-// the catalog be generated from a high-level controller config rather than a
-// captured snapshot.
+// The per-object GRAMMAR is reversed in scaffold_decode.go: each row decodes
+// into a named key (class + attribute id + descriptor form + query marker) and a
+// named value type-signature (an envelope around a column list of type references
+// and column-id references). DecodeConfigScope / AnnotateConfigScope expose it
+// (also `cfgdump -scope`), and a round-trip test proves the naming is lossless.
+//
+// What is NOT reversed is the leaf id space: the attribute ids, the column-id
+// references and the 0x07f0-family type handles are assigned by the nv runtime
+// (not static symbols in the binaries, no name string in any capture), so they
+// cannot be mapped to human names (vlan-id, band, …) from static material — that
+// needs a live getall that pairs each id with its name. See
+// docs/re/CMR_CONFIG_SCHEMA.md.
 
 // DefaultControllerBoard is the board string the controller advertises in its
 // roots (a real RouterOS CHR controller reports "CHR").
