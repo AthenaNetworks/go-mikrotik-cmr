@@ -31,23 +31,38 @@ import (
 //
 // Routes:
 //
-//	GET    /healthz                liveness + device count
+//	GET    /healthz                liveness + device count + version
+//	GET    /identity               controller fingerprint, listen address and version
 //	GET    /devices                known devices (connected or not)
 //	GET    /devices/{id}           one device
 //	PUT    /devices/{id}/config    set desired config — {"vlan":N,"bridge":"..."} or {"graph":"<hex>"}
 //	DELETE /devices/{id}/config    clear desired config
+//	DELETE /devices/{id}           forget a device (remove its registry record)
 //	GET    /sessions               live device sessions
 func (s *Server) AdminHandler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
-		writeJSON(w, http.StatusOK, map[string]any{"status": "ok", "devices": len(s.Devices())})
+		writeJSON(w, http.StatusOK, map[string]any{"status": "ok", "devices": len(s.Devices()), "version": s.cfg.version()})
 	})
+	mux.HandleFunc("GET /identity", s.adminIdentity)
 	mux.HandleFunc("GET /devices", s.adminListDevices)
 	mux.HandleFunc("GET /devices/{id}", s.adminGetDevice)
 	mux.HandleFunc("PUT /devices/{id}/config", s.adminSetConfig)
 	mux.HandleFunc("DELETE /devices/{id}/config", s.adminClearConfig)
+	mux.HandleFunc("DELETE /devices/{id}", s.adminForgetDevice)
 	mux.HandleFunc("GET /sessions", s.adminListSessions)
 	return mux
+}
+
+// adminIdentity reports the controller's pinned fingerprint (the SHA-256 a device
+// pins), its bound listen address, and the build version — what an operator needs
+// to point devices at this controller.
+func (s *Server) adminIdentity(w http.ResponseWriter, _ *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{
+		"fingerprint": Fingerprint(s.cfg.Certificate),
+		"listen_addr": s.ListenAddr(),
+		"version":     s.cfg.version(),
+	})
 }
 
 // BearerAuth wraps h so every request must carry "Authorization: Bearer <token>".
@@ -74,16 +89,21 @@ func BearerAuth(token string, h http.Handler) http.Handler {
 // connected state and the decoded desired config (never the raw []byte, which
 // would marshal as opaque base64).
 type deviceView struct {
-	ID        DeviceID    `json:"id"`
-	MAC       string      `json:"mac,omitempty"`
-	Identity  string      `json:"identity,omitempty"`
-	Board     string      `json:"board,omitempty"`
-	Arch      string      `json:"arch,omitempty"`
-	OS        string      `json:"os,omitempty"`
-	Connected bool        `json:"connected"`
-	FirstSeen time.Time   `json:"first_seen"`
-	LastSeen  time.Time   `json:"last_seen"`
-	Config    *configView `json:"config,omitempty"`
+	ID        DeviceID `json:"id"`
+	MAC       string   `json:"mac,omitempty"`
+	Identity  string   `json:"identity,omitempty"`
+	Board     string   `json:"board,omitempty"`
+	Arch      string   `json:"arch,omitempty"`
+	OS        string   `json:"os,omitempty"`
+	Connected bool     `json:"connected"`
+	// LastRemoteAddr is the source IP of the device's last connection. For a
+	// device behind NAT this is the NAT address, so treat it as a hint for the
+	// poll target, not authoritative (prefer an address the device reports, and
+	// allow an operator override).
+	LastRemoteAddr string      `json:"last_remote_addr,omitempty"`
+	FirstSeen      time.Time   `json:"first_seen"`
+	LastSeen       time.Time   `json:"last_seen"`
+	Config         *configView `json:"config,omitempty"`
 }
 
 // configView is the JSON shape of a desired config graph: the raw id30 graph as
@@ -189,6 +209,14 @@ func (s *Server) adminClearConfig(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (s *Server) adminForgetDevice(w http.ResponseWriter, r *http.Request) {
+	if !s.Forget(DeviceID(r.PathValue("id"))) {
+		httpError(w, http.StatusNotFound, "device not found")
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (s *Server) adminListSessions(w http.ResponseWriter, _ *http.Request) {
 	sess := s.Sessions()
 	out := make([]sessionView, 0, len(sess))
@@ -207,16 +235,17 @@ func (s *Server) adminListSessions(w http.ResponseWriter, _ *http.Request) {
 
 func deviceToView(d Device) deviceView {
 	return deviceView{
-		ID:        d.ID,
-		MAC:       d.MAC,
-		Identity:  d.Identity,
-		Board:     d.Board,
-		Arch:      d.Arch,
-		OS:        d.OS,
-		Connected: d.connected,
-		FirstSeen: d.FirstSeen,
-		LastSeen:  d.LastSeen,
-		Config:    configToView(d.DesiredConfig),
+		ID:             d.ID,
+		MAC:            d.MAC,
+		Identity:       d.Identity,
+		Board:          d.Board,
+		Arch:           d.Arch,
+		OS:             d.OS,
+		Connected:      d.connected,
+		LastRemoteAddr: d.LastRemoteAddr,
+		FirstSeen:      d.FirstSeen,
+		LastSeen:       d.LastSeen,
+		Config:         configToView(d.DesiredConfig),
 	}
 }
 

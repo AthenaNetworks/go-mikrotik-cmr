@@ -103,6 +103,11 @@ type Config struct {
 	// synthesised roots. Empty means cmr.DefaultControllerBoard ("CHR").
 	ControllerBoard string
 
+	// Version is a build/version string reported by the admin API (/identity and
+	// /healthz) so an operator or integrating service can tell which build is
+	// running. Empty reports "dev".
+	Version string
+
 	// AutoWrite, if set, is an id30 config object graph (e.g. from
 	// cmr.BuildVLANConfig) pushed into each device's config scope once, WriteDelay
 	// after it pairs. For dynamic control use Session.WriteConfig instead.
@@ -129,6 +134,13 @@ type Config struct {
 	OnObject     func(*Session, Object) // device reported an object (read path)
 	OnIdentify   func(*Session, Device) // device identified in the registry (first time this connection)
 	OnDisconnect func(*Session, error)  // connection ended
+}
+
+func (c *Config) version() string {
+	if c.Version == "" {
+		return "dev"
+	}
+	return c.Version
 }
 
 func (c *Config) writeScope() string {
@@ -179,10 +191,11 @@ type Server struct {
 	log *slog.Logger
 	tls *tls.Config
 
-	mu   sync.Mutex
-	ln   net.Listener
-	sess map[*Session]struct{}
-	done bool
+	mu         sync.Mutex
+	ln         net.Listener
+	listenAddr string // the bound listener address, once serving
+	sess       map[*Session]struct{}
+	done       bool
 
 	devMu   sync.Mutex
 	devices map[DeviceID]*Device
@@ -220,6 +233,14 @@ func New(cfg Config) (*Server, error) {
 	return s, nil
 }
 
+// ListenAddr returns the bound listener address once the server is serving, or
+// an empty string before then.
+func (s *Server) ListenAddr() string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.listenAddr
+}
+
 // ListenAndServe listens on addr (TLS 1.2) and serves until Close.
 func (s *Server) ListenAndServe(addr string) error {
 	ln, err := net.Listen("tcp", addr)
@@ -238,6 +259,7 @@ func (s *Server) Serve(ln net.Listener) error {
 		return errors.New("controller: server closed")
 	}
 	s.ln = ln
+	s.listenAddr = ln.Addr().String()
 	s.mu.Unlock()
 
 	s.log.Info("cmr controller listening", "addr", ln.Addr().String(), "tls", "1.2", "pairing", "open")

@@ -3,6 +3,7 @@ package controller
 import (
 	"crypto/tls"
 	"net"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -10,6 +11,34 @@ import (
 	"github.com/athenanetworks/cmr-server/pkg/cmr"
 	"github.com/athenanetworks/cmr-server/pkg/m3"
 )
+
+// TestFileStoreVersionCompat pins the on-disk registry's cross-version behaviour:
+// a newer binary reads an older reg.json (a field it adds is simply empty), and
+// an older binary reads a newer one (unknown fields are ignored, not an error).
+// So upgrades can just swap the binary.
+func TestFileStoreVersionCompat(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "reg.json")
+
+	// Older file: no last_remote_addr. Loads fine; the new field is empty.
+	old := `[{"id":"aa","mac":"aa","board":"CHR","first_seen":"2026-01-01T00:00:00Z","last_seen":"2026-01-01T00:00:00Z"}]`
+	if err := os.WriteFile(path, []byte(old), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	got, err := NewFileStore(path).Load()
+	if err != nil || len(got) != 1 || got[0].ID != "aa" || got[0].LastRemoteAddr != "" {
+		t.Fatalf("old file load = %+v, %v", got, err)
+	}
+
+	// Newer file: an unknown future field plus last_remote_addr. Tolerated.
+	future := `[{"id":"bb","last_remote_addr":"203.0.113.5","future_field":123}]`
+	if err := os.WriteFile(path, []byte(future), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	got, err = NewFileStore(path).Load()
+	if err != nil || len(got) != 1 || got[0].LastRemoteAddr != "203.0.113.5" {
+		t.Fatalf("new file load = %+v, %v", got, err)
+	}
+}
 
 func TestFileStoreRoundTrip(t *testing.T) {
 	fs := NewFileStore(filepath.Join(t.TempDir(), "reg.json"))

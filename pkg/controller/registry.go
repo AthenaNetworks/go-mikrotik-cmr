@@ -13,15 +13,16 @@ type DeviceID string
 // Device is the server's record of a known CMR device. The exported fields
 // persist (see Store); zero values mean "not yet learned".
 type Device struct {
-	ID            DeviceID  `json:"id"`
-	MAC           string    `json:"mac,omitempty"`
-	Identity      string    `json:"identity,omitempty"` // device system name (descriptor id67)
-	Board         string    `json:"board,omitempty"`
-	Arch          string    `json:"arch,omitempty"`
-	OS            string    `json:"os,omitempty"`
-	DesiredConfig []byte    `json:"desired_config,omitempty"` // id30 graph pushed on connect
-	FirstSeen     time.Time `json:"first_seen"`
-	LastSeen      time.Time `json:"last_seen"`
+	ID             DeviceID  `json:"id"`
+	MAC            string    `json:"mac,omitempty"`
+	Identity       string    `json:"identity,omitempty"` // device system name (descriptor id67)
+	Board          string    `json:"board,omitempty"`
+	Arch           string    `json:"arch,omitempty"`
+	OS             string    `json:"os,omitempty"`
+	LastRemoteAddr string    `json:"last_remote_addr,omitempty"` // source IP of the device's last connection (may be a NAT address)
+	DesiredConfig  []byte    `json:"desired_config,omitempty"`   // id30 graph pushed on connect
+	FirstSeen      time.Time `json:"first_seen"`
+	LastSeen       time.Time `json:"last_seen"`
 
 	connected bool // runtime only
 }
@@ -98,6 +99,24 @@ func (s *Server) SetDesiredConfig(id DeviceID, graph []byte) error {
 	return nil
 }
 
+// Forget removes a device's registry record (identity + desired config) and
+// persists the change, returning whether the device was known. It does not drop
+// a live connection: a device that is currently connected, or that reconnects
+// under open pairing, re-enrols on its next reported object — so Forget is for
+// removing a known device, not for denying one access (do that at the network).
+func (s *Server) Forget(id DeviceID) bool {
+	s.devMu.Lock()
+	_, ok := s.devices[id]
+	if ok {
+		delete(s.devices, id)
+	}
+	s.devMu.Unlock()
+	if ok {
+		s.persist()
+	}
+	return ok
+}
+
 // sessionFor returns the live session for a device id, or nil. Caller holds devMu.
 func (s *Server) sessionFor(id DeviceID) *Session {
 	s.mu.Lock()
@@ -116,7 +135,7 @@ func (s *Server) sessionFor(id DeviceID) *Session {
 // upsertDevice records what a session has learned about its device and marks it
 // connected. It returns a snapshot of the device and whether this call is the one
 // that first identified it this connection.
-func (s *Server) upsertDevice(id DeviceID, mac string, info cmr.DeviceInfo) (Device, bool) {
+func (s *Server) upsertDevice(id DeviceID, mac, remoteAddr string, info cmr.DeviceInfo) (Device, bool) {
 	s.devMu.Lock()
 	d, known := s.devices[id]
 	if !known {
@@ -125,6 +144,9 @@ func (s *Server) upsertDevice(id DeviceID, mac string, info cmr.DeviceInfo) (Dev
 	}
 	if mac != "" {
 		d.MAC = mac
+	}
+	if remoteAddr != "" {
+		d.LastRemoteAddr = remoteAddr
 	}
 	if info.Board != "" {
 		d.Board = info.Board

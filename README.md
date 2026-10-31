@@ -26,7 +26,7 @@ and research project.
 | Config graph **codec** (author, decode, round-trip) + attribute dictionary | **Working** — `pkg/cmr.Graph`/`DecodeGraph`/`Encode` round-trip a graph byte-for-byte; `ParseVLANConfig` is the inverse of `BuildVLANConfig`; the 410-attribute dictionary (`cmd/cmr-schema`) is embedded and queryable via `Attrs`/`AttrByName`/`AttrByID`; `cfgdump -tree` decodes structurally |
 | **Embeddable controller library** (`pkg/controller`) | **Working** — `controller.New(Config).ListenAndServe()` runs the whole pairing + object-sync + config-write state machine with `OnConnect`/`OnPair`/`OnObject`/`OnIdentify` callbacks and `Session.WriteConfig`; `cmd/cmr-ctrl` is a thin wrapper over it; bring-up covered by an in-process integration test |
 | **Multi-device registry + persistence** | **Working** — a `Store` (JSON `FileStore` provided) makes the server identify each device by a stable key (MAC), track it (`Devices`/`Device`), persist enrolments + per-device desired config across restarts, and re-apply a device's config on reconnect; `SetDesiredConfig(id, graph)` drives one device; covered by an end-to-end reconcile test |
-| **HTTP admin API** | **Working** — `srv.AdminHandler()` exposes the registry as a JSON API (list/inspect devices, set/clear per-device config, list live sessions); `cmd/cmr-ctrl -admin <addr>` serves it, optional bearer token (`-admintoken`); covered by handler tests |
+| **HTTP admin API** | **Working** — `srv.AdminHandler()` exposes the registry as a JSON API (health/identity, list/inspect/forget devices, set/clear per-device config, list live sessions); `cmd/cmr-ctrl -admin <addr>` serves it, optional bearer token (`-admintoken` / `-admintoken-file` / `CMR_ADMIN_TOKEN`); covered by handler tests |
 | **Controller scaffold synthesised from structure** | **Working** — `pkg/cmr.EncodeRoots` / `EncodeConfigScope` rebuild the controller's own root + config-scope id9 objects from a decoded catalog, reproducing the captured blobs byte-for-byte; the server defaults to these, so it drives a device's full state dump with no captured hex. Per-object grammar reversed + named (`DecodeConfigScope` / `cfgdump -scope`, lossless round-trip); leaf nv ids stay numeric (runtime-assigned, no static names); round-trip + on-wire tests |
 
 The controller currently implements the **open pairing** path. Password (PKEX)
@@ -146,13 +146,23 @@ your own auth) or let the daemon serve it with `-admin`:
 
 ```
 cmr-ctrl -registry devices.json -admin 127.0.0.1:8080 -admintoken s3cret
+#   token also via -admintoken-file <path> or the CMR_ADMIN_TOKEN env var
 
-GET    /devices                 known devices (connected or not)
+GET    /healthz                 liveness + device count + version
+GET    /identity                controller fingerprint, listen address and version
+GET    /devices                 known devices (incl. last_remote_addr, connected state)
 GET    /devices/{id}            one device
 PUT    /devices/{id}/config     set config — {"vlan":100,"bridge":"cmr-bridge"} or {"graph":"<hex>"}
 DELETE /devices/{id}/config     clear config
+DELETE /devices/{id}            forget a device (remove its registry record)
 GET    /sessions                live device sessions
 ```
+
+The registry (`-registry`) is a JSON file whose format is additive across
+versions — a newer `cmr-ctrl` reads an older file (new fields default empty) and
+an older one ignores fields it does not know — so an upgrade is just a binary
+swap. `last_remote_addr` is the device's source IP (a NAT address for a device
+behind NAT, so treat it as a hint for the poll target, not authoritative).
 
 Setting a device's config pre-enrols it: the record is created now and applied when
 that device next connects. Wrap the handler with `controller.BearerAuth(token, h)`

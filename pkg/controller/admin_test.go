@@ -165,6 +165,71 @@ func TestAdminBearerAuth(t *testing.T) {
 	}
 }
 
+func TestAdminIdentityAndVersion(t *testing.T) {
+	cert, err := Identity("")
+	if err != nil {
+		t.Fatalf("identity: %v", err)
+	}
+	srv, err := New(Config{
+		Certificate: cert,
+		Version:     "v9.9.9-test",
+		Store:       NewFileStore(t.TempDir() + "/devices.json"),
+	})
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	h := srv.AdminHandler()
+
+	id := decodeBody[map[string]any](t, do(t, h, "GET", "/identity", ""))
+	if id["fingerprint"] != Fingerprint(cert) {
+		t.Fatalf("identity fingerprint = %v, want %s", id["fingerprint"], Fingerprint(cert))
+	}
+	if id["version"] != "v9.9.9-test" {
+		t.Fatalf("identity version = %v", id["version"])
+	}
+	// listen_addr is empty until the server is actually serving.
+	if id["listen_addr"] != "" {
+		t.Fatalf("listen_addr = %v, want empty before serving", id["listen_addr"])
+	}
+
+	hz := decodeBody[map[string]any](t, do(t, h, "GET", "/healthz", ""))
+	if hz["version"] != "v9.9.9-test" || hz["status"] != "ok" {
+		t.Fatalf("healthz = %v", hz)
+	}
+}
+
+func TestAdminForgetDevice(t *testing.T) {
+	_, h := newAdminServer(t)
+	const id = "52:54:00:cc:02:02"
+
+	// Pre-enrol via a config set, then forget it.
+	if rr := do(t, h, "PUT", "/devices/"+id+"/config", `{"vlan":10}`); rr.Code != http.StatusOK {
+		t.Fatalf("pre-enrol = %d %s", rr.Code, rr.Body)
+	}
+	if rr := do(t, h, "DELETE", "/devices/"+id, ""); rr.Code != http.StatusNoContent {
+		t.Fatalf("forget = %d %s", rr.Code, rr.Body)
+	}
+	if rr := do(t, h, "GET", "/devices/"+id, ""); rr.Code != http.StatusNotFound {
+		t.Fatalf("after forget = %d, want 404", rr.Code)
+	}
+	// Forgetting an unknown device is a 404.
+	if rr := do(t, h, "DELETE", "/devices/nope", ""); rr.Code != http.StatusNotFound {
+		t.Fatalf("forget unknown = %d, want 404", rr.Code)
+	}
+}
+
+func TestAdminLastRemoteAddr(t *testing.T) {
+	srv, h := newAdminServer(t)
+	const id = "52:54:00:cc:03:03"
+	// Simulate the identify path recording the device's source IP.
+	srv.upsertDevice(id, id, "203.0.113.9", cmr.DeviceInfo{Board: "CCR"})
+
+	dv := decodeBody[deviceView](t, do(t, h, "GET", "/devices/"+id, ""))
+	if dv.LastRemoteAddr != "203.0.113.9" {
+		t.Fatalf("last_remote_addr = %q, want 203.0.113.9", dv.LastRemoteAddr)
+	}
+}
+
 func TestAdminHealthAndSessions(t *testing.T) {
 	_, h := newAdminServer(t)
 	if rr := do(t, h, "GET", "/healthz", ""); rr.Code != http.StatusOK {

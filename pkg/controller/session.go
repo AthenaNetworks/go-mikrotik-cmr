@@ -49,8 +49,18 @@ type Object struct {
 	RawValue []byte
 }
 
-// Peer returns the device's remote address.
+// Peer returns the device's remote address (host:port).
 func (s *Session) Peer() string { return s.peer }
+
+// remoteIP returns the device's source IP (the host part of Peer, without the
+// port). For a device behind NAT this is the NAT address, not the device's own.
+func (s *Session) remoteIP() string {
+	host, _, err := net.SplitHostPort(s.peer)
+	if err != nil {
+		return s.peer
+	}
+	return host
+}
 
 // DevFlag returns the device's query flag (0 until its discovery arrives).
 func (s *Session) DevFlag() byte {
@@ -309,7 +319,7 @@ func (s *Session) step(f m3.Field) [][]byte {
 					id := s.devID
 					s.mu.Unlock()
 					if id != "" { // enrich an already-identified record
-						srv.upsertDevice(id, "", d)
+						srv.upsertDevice(id, "", s.remoteIP(), d)
 					}
 				}
 			}
@@ -405,7 +415,7 @@ func (s *Session) identify(obj Object) {
 	if len(obj.Key.MACs) > 0 {
 		mac = obj.Key.MACs[0]
 	}
-	dev, _ := s.srv.upsertDevice(id, mac, descr)
+	dev, _ := s.srv.upsertDevice(id, mac, s.remoteIP(), descr)
 	s.srv.log.Info("device identified", "peer", s.peer, "id", id, "board", dev.Board)
 	if s.srv.cfg.OnIdentify != nil {
 		s.srv.cfg.OnIdentify(s, dev)

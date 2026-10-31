@@ -23,6 +23,10 @@ import (
 	"github.com/athenanetworks/cmr-server/pkg/controller"
 )
 
+// version is the build version, reported by the admin API. Override at build time
+// with -ldflags "-X main.version=v0.1.0".
+var version = "dev"
+
 func main() {
 	addr := flag.String("listen", "10.99.0.1:54321", "TLS listen address")
 	keyfile := flag.String("keyfile", "", "path to persist the Ed25519 identity (stable fingerprint across restarts); empty = ephemeral")
@@ -42,6 +46,7 @@ func main() {
 	registry := flag.String("registry", "", "path to a JSON device registry (enables multi-device tracking + persistence; -vlan/-writefile become the default config for devices without their own)")
 	adminAddr := flag.String("admin", "", "address for the HTTP admin API (e.g. 127.0.0.1:8080); empty = disabled")
 	adminToken := flag.String("admintoken", "", "if set, the admin API requires Authorization: Bearer <token>")
+	adminTokenFile := flag.String("admintoken-file", "", "read the admin bearer token from this file (keeps it out of ps/argv); also CMR_ADMIN_TOKEN env. Precedence: -admintoken > -admintoken-file > env")
 
 	enumScope := flag.String("enum", "", "after pairing, send an id7 getall for this scope (e.g. com.mikrotik.cmr)")
 	enumFlag := flag.Uint("enumflag", 0x18, "id29 flag byte for the -enum getall")
@@ -66,6 +71,7 @@ func main() {
 		Certificate: cert,
 		IdleTimeout: *idle,
 		Logger:      logger,
+		Version:     version,
 		Roots:       readHex(*pushFile),
 		ConfigBurst: readHex(*resyncFile),
 		WriteScope:  *writeScope,
@@ -110,7 +116,11 @@ func main() {
 		if *registry == "" {
 			logger.Warn("admin API enabled without -registry: devices are not tracked, so the device routes stay empty")
 		}
-		go serveAdmin(logger, srv, *adminAddr, *adminToken)
+		token, err := resolveAdminToken(*adminToken, *adminTokenFile)
+		if err != nil {
+			log.Fatalf("admin token: %v", err)
+		}
+		go serveAdmin(logger, srv, *adminAddr, token)
 	}
 
 	if err := srv.ListenAndServe(*addr); err != nil {
@@ -126,6 +136,24 @@ func serveAdmin(logger *slog.Logger, srv *controller.Server, addr, token string)
 	if err := as.ListenAndServe(); err != nil {
 		logger.Error("admin API stopped", "err", err)
 	}
+}
+
+// resolveAdminToken picks the admin bearer token: the -admintoken flag wins, then
+// the -admintoken-file contents, then the CMR_ADMIN_TOKEN env var. An empty result
+// leaves the admin API unauthenticated (BearerAuth is a no-op) — fine behind a
+// loopback bind, but pair it with a token for anything wider.
+func resolveAdminToken(flagVal, file string) (string, error) {
+	if flagVal != "" {
+		return flagVal, nil
+	}
+	if file != "" {
+		b, err := os.ReadFile(file)
+		if err != nil {
+			return "", err
+		}
+		return strings.TrimSpace(string(b)), nil
+	}
+	return os.Getenv("CMR_ADMIN_TOKEN"), nil
 }
 
 // readHex loads and decodes a hex blob file, or returns nil for an empty path.
