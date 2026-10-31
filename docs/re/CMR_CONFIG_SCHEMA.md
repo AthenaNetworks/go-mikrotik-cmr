@@ -165,6 +165,39 @@ New config types are added by declaring their object/field layout as a `Graph`
 (once a reference graph is captured) — the framing, round-trip and typed slots
 are handled by the codec.
 
+## Controller scaffold synthesis (`pkg/cmr`) — DONE
+
+Separate from the config-**write** graph above is the controller's own **scaffold**:
+the id9 objects a RouterOS controller streams *to* a freshly paired device so it
+begins, then completes, its state dump. There are two:
+
+- **Roots** (`docs/samples/controller-roots.hex`, 45 B) — two id9 self-advertisement
+  rows that ride the id10 SUCCESS frame. Row 0 is bare; row 1 carries the board
+  string (`CHR`). They make the device start dumping.
+- **Config-scope burst** (`controller-config.hex`, 2897 B) — 33 id9 objects
+  describing the controller's `com.mikrotik.cmr` scope, streamed in answer to the
+  device's getall. The device needs them to reciprocate with its full state.
+
+These were replayed from captured hex. They are now **synthesised from structure**:
+
+- Each id9 row is `{id74 key, [id75 value], id29 flag, id64 index, id21 handle}`.
+  The key is `classChunk(ClassConfig)` + a 2-byte attribute id + a marker; the value
+  (wire **type 2**, unlike every other field's type 1 — reproducing that is required
+  for byte-identity) is a list of `0x07f0`-family type references and inline values.
+- The envelope is generated: the query **flag** (`0x10` in the capture, rewritten to
+  the device's flag by `patchObjectFlag`), the per-object **index**, and the **handle**
+  counter sequence (`0x26..0x36` then `0x47..0x56` — a captured discontinuity).
+- `EncodeRoots(flag, board)` and `EncodeConfigScope(flag)` rebuild the streams;
+  both reproduce the captures **byte-for-byte** (`scaffold_test.go`). The object
+  catalog (`scaffold_catalog.go`) is generated from the capture by `cmd/cmr-scaffold`
+  (`go generate ./pkg/cmr`). The server defaults to these, so it drives a device's
+  dump with **no captured hex at runtime**; `Config.Roots`/`ConfigBurst` override.
+
+Not yet reversed: the per-object **semantics**. Keys (class + attr id) and the dozen
+distinct value type-refs (incl. the `0x07f00015`/`0x07f00009` config classes) are
+carried faithfully but mostly unnamed. Naming them is what would let the catalog be
+authored from a high-level controller config rather than a captured snapshot.
+
 ## Remaining work
 
 1. **Type coverage:** 256 of 410 attributes still show `unknown` — the format-2

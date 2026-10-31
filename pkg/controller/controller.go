@@ -32,6 +32,8 @@ import (
 	"net"
 	"sync"
 	"time"
+
+	"github.com/athenanetworks/cmr-server/pkg/cmr"
 )
 
 // m3 field ids on the CMR control channel.
@@ -84,14 +86,22 @@ type Config struct {
 	Logger *slog.Logger
 
 	// Roots is the controller's root object blob (id9 rows) streamed as part of
-	// the SUCCESS frame — this is what makes a paired device begin its state
-	// dump. Empty means SUCCESS is sent alone. See docs/samples/controller-roots.hex.
+	// the SUCCESS frame — this is what makes a paired device begin its state dump.
+	// Empty means the server SYNTHESISES it from structure (cmr.EncodeRoots), so
+	// the server works without a captured blob; set it to replay a specific
+	// capture instead. See docs/samples/controller-roots.hex.
 	Roots []byte
 
 	// ConfigBurst is the controller's config object blob (id9 rows) streamed in
-	// answer to the device's getall for the controller scope. Empty means the
-	// getall is not answered. See docs/samples/controller-config.hex.
+	// answer to the device's getall for the controller scope — the device needs it
+	// to complete its state dump. Empty means the server SYNTHESISES it from
+	// structure (cmr.EncodeConfigScope); set it to replay a specific capture
+	// instead. See docs/samples/controller-config.hex.
 	ConfigBurst []byte
+
+	// ControllerBoard is the board string the controller advertises in its
+	// synthesised roots. Empty means cmr.DefaultControllerBoard ("CHR").
+	ControllerBoard string
 
 	// AutoWrite, if set, is an id30 config object graph (e.g. from
 	// cmr.BuildVLANConfig) pushed into each device's config scope once, WriteDelay
@@ -140,6 +150,26 @@ func (c *Config) writeDelay() time.Duration {
 		return DefaultWriteDelay
 	}
 	return c.WriteDelay
+}
+
+// rootsBlob returns the roots id9 stream to ride the SUCCESS frame: the configured
+// capture, or one synthesised from structure. It is produced at the canonical flag
+// (0x10) and the device's flag is applied downstream by patchObjectFlag.
+func (c *Config) rootsBlob() []byte {
+	if len(c.Roots) > 0 {
+		return c.Roots
+	}
+	return cmr.EncodeRoots(0x10, c.ControllerBoard)
+}
+
+// configBurst returns the config-scope id9 stream answering the device's getall:
+// the configured capture, or one synthesised from structure (flag patched
+// downstream).
+func (c *Config) configBurst() []byte {
+	if len(c.ConfigBurst) > 0 {
+		return c.ConfigBurst
+	}
+	return cmr.EncodeConfigScope(0x10)
 }
 
 // Server is a CMR controller. Create it with New and run it with ListenAndServe

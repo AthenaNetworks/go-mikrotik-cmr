@@ -247,10 +247,12 @@ func (s *Session) step(f m3.Field) [][]byte {
 		s.mu.Unlock()
 
 		out := [][]byte{verAck(discSeq, 0x01)}
-		if len(srv.cfg.Roots) > 0 && devFlag != 0 {
-			out = append(out, successWithRootsFrame(srv.cfg.Roots, devFlag))
-			srv.log.Info("paired (SUCCESS+roots)", "peer", s.peer, "flag", devFlag)
+		if devFlag != 0 {
+			synth := len(srv.cfg.Roots) == 0
+			out = append(out, successWithRootsFrame(srv.cfg.rootsBlob(), devFlag))
+			srv.log.Info("paired (SUCCESS+roots)", "peer", s.peer, "flag", devFlag, "synthesized", synth)
 		} else {
+			// No query flag yet: can't frame roots the device will accept.
 			out = append(out, successFrame())
 			srv.log.Info("paired (SUCCESS)", "peer", s.peer)
 		}
@@ -281,11 +283,14 @@ func (s *Session) step(f m3.Field) [][]byte {
 		if f.ID == idResync {
 			// A resync (id7) is the device's getall for the controller's scope; a
 			// real controller answers it by streaming its config id9 burst, which is
-			// what makes the device reciprocate with its own state dump.
-			if len(srv.cfg.ConfigBurst) > 0 {
+			// what makes the device reciprocate with its own state dump. The burst is
+			// synthesised from structure unless a capture is configured.
+			burst := srv.cfg.configBurst()
+			if len(burst) > 0 {
 				flag := s.DevFlag()
-				srv.log.Info("getall -> config burst", "peer", s.peer, "bytes", len(srv.cfg.ConfigBurst), "flag", flag)
-				return [][]byte{patchObjectFlag(srv.cfg.ConfigBurst, flag)}
+				srv.log.Info("getall -> config burst", "peer", s.peer, "bytes", len(burst),
+					"flag", flag, "synthesized", len(srv.cfg.ConfigBurst) == 0)
+				return [][]byte{patchObjectFlag(burst, flag)}
 			}
 			return nil
 		}

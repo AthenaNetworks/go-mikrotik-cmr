@@ -29,8 +29,8 @@ func main() {
 	idle := flag.Duration("idle", 0, "per-read idle timeout before closing a connection (0 = never, hold open)")
 	verbose := flag.Bool("v", false, "log every frame (Debug level) including a recursive decode")
 
-	pushFile := flag.String("pushfile", "", "hex blob of controller root objects streamed with SUCCESS (triggers the device's state dump)")
-	resyncFile := flag.String("resyncfile", "", "hex blob of id9 config objects streamed in answer to the device's getall (the controller's scope dump)")
+	pushFile := flag.String("pushfile", "", "override the SUCCESS root objects with a hex blob (empty = synthesised by pkg/cmr.EncodeRoots)")
+	resyncFile := flag.String("resyncfile", "", "override the getall config burst with a hex blob (empty = synthesised by pkg/cmr.EncodeConfigScope)")
 
 	writeFile := flag.String("writefile", "", "hex id30 config object graph to WRITE into the device's config scope after it pairs")
 	writeVLAN := flag.Int("vlan", 0, "author a CMR vlan config (vlan-ids=<n>) in-process and WRITE it; overrides -writefile when >0")
