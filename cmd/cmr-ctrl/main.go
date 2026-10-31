@@ -28,7 +28,7 @@ import (
 var version = "dev"
 
 func main() {
-	addr := flag.String("listen", "10.99.0.1:54321", "TLS listen address")
+	addr := flag.String("listen", ":54321", "TLS listen address")
 	keyfile := flag.String("keyfile", "", "path to persist the Ed25519 identity (stable fingerprint across restarts); empty = ephemeral")
 	idle := flag.Duration("idle", 0, "per-read idle timeout before closing a connection (0 = never, hold open)")
 	verbose := flag.Bool("v", false, "log every frame (Debug level) including a recursive decode")
