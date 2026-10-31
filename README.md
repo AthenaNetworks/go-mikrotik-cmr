@@ -26,6 +26,7 @@ and research project.
 | Config graph **codec** (author, decode, round-trip) + attribute dictionary | **Working** — `pkg/cmr.Graph`/`DecodeGraph`/`Encode` round-trip a graph byte-for-byte; `ParseVLANConfig` is the inverse of `BuildVLANConfig`; the 410-attribute dictionary (`cmd/cmr-schema`) is embedded and queryable via `Attrs`/`AttrByName`/`AttrByID`; `cfgdump -tree` decodes structurally |
 | **Embeddable controller library** (`pkg/controller`) | **Working** — `controller.New(Config).ListenAndServe()` runs the whole pairing + object-sync + config-write state machine with `OnConnect`/`OnPair`/`OnObject`/`OnIdentify` callbacks and `Session.WriteConfig`; `cmd/cmr-ctrl` is a thin wrapper over it; bring-up covered by an in-process integration test |
 | **Multi-device registry + persistence** | **Working** — a `Store` (JSON `FileStore` provided) makes the server identify each device by a stable key (MAC), track it (`Devices`/`Device`), persist enrolments + per-device desired config across restarts, and re-apply a device's config on reconnect; `SetDesiredConfig(id, graph)` drives one device; covered by an end-to-end reconcile test |
+| **HTTP admin API** | **Working** — `srv.AdminHandler()` exposes the registry as a JSON API (list/inspect devices, set/clear per-device config, list live sessions); `cmd/cmr-ctrl -admin <addr>` serves it, optional bearer token (`-admintoken`); covered by handler tests |
 
 The controller currently implements the **open pairing** path. Password (PKEX)
 pairing is a custom, TLS-channel-bound EC+HMAC PAKE inside `ssld` and is out of
@@ -133,8 +134,26 @@ lists the connected devices. Add a `Store` (a JSON `FileStore` is provided) to m
 the server multi-device: it identifies each device by a stable key, tracks it
 (`srv.Devices()` / `srv.Device(id)`), persists enrolments and per-device desired
 config across restarts, and re-applies a device's config whenever it reconnects;
-`srv.SetDesiredConfig(id, graph)` drives one device by id (e.g. from an admin
-handler). See [examples/embed](examples/embed/main.go). The
+`srv.SetDesiredConfig(id, graph)` drives one device by id. See
+[examples/embed](examples/embed/main.go).
+
+`srv.AdminHandler()` returns an `http.Handler` that exposes the registry as a JSON
+API, so the same control is reachable over HTTP — mount it on your own mux (behind
+your own auth) or let the daemon serve it with `-admin`:
+
+```
+cmr-ctrl -registry devices.json -admin 127.0.0.1:8080 -admintoken s3cret
+
+GET    /devices                 known devices (connected or not)
+GET    /devices/{id}            one device
+PUT    /devices/{id}/config     set config — {"vlan":100,"bridge":"cmr-bridge"} or {"graph":"<hex>"}
+DELETE /devices/{id}/config     clear config
+GET    /sessions                live device sessions
+```
+
+Setting a device's config pre-enrols it: the record is created now and applied when
+that device next connects. Wrap the handler with `controller.BearerAuth(token, h)`
+for a shared-token guard. The
 captured controller scaffold objects (`docs/samples/controller-{roots,config}.hex`)
 are supplied via `Config.Roots` / `Config.ConfigBurst` to drive the device's full
 state dump; synthesising those from structured state (as `pkg/cmr` already does

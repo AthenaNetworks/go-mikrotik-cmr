@@ -14,8 +14,10 @@ import (
 	"flag"
 	"log"
 	"log/slog"
+	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/athenanetworks/cmr-server/pkg/cmr"
 	"github.com/athenanetworks/cmr-server/pkg/controller"
@@ -38,6 +40,8 @@ func main() {
 	writeDelay := flag.Duration("writedelay", controller.DefaultWriteDelay, "delay after pairing before the config WRITE (let the device reach steady state)")
 
 	registry := flag.String("registry", "", "path to a JSON device registry (enables multi-device tracking + persistence; -vlan/-writefile become the default config for devices without their own)")
+	adminAddr := flag.String("admin", "", "address for the HTTP admin API (e.g. 127.0.0.1:8080); empty = disabled")
+	adminToken := flag.String("admintoken", "", "if set, the admin API requires Authorization: Bearer <token>")
 
 	enumScope := flag.String("enum", "", "after pairing, send an id7 getall for this scope (e.g. com.mikrotik.cmr)")
 	enumFlag := flag.Uint("enumflag", 0x18, "id29 flag byte for the -enum getall")
@@ -101,8 +105,26 @@ func main() {
 	if err != nil {
 		log.Fatalf("controller: %v", err)
 	}
+
+	if *adminAddr != "" {
+		if *registry == "" {
+			logger.Warn("admin API enabled without -registry: devices are not tracked, so the device routes stay empty")
+		}
+		go serveAdmin(logger, srv, *adminAddr, *adminToken)
+	}
+
 	if err := srv.ListenAndServe(*addr); err != nil {
 		log.Fatalf("serve: %v", err)
+	}
+}
+
+// serveAdmin runs the HTTP admin API, optionally guarded by a bearer token.
+func serveAdmin(logger *slog.Logger, srv *controller.Server, addr, token string) {
+	h := controller.BearerAuth(token, srv.AdminHandler())
+	logger.Info("admin API listening", "addr", addr, "auth", token != "")
+	as := &http.Server{Addr: addr, Handler: h, ReadHeaderTimeout: 5 * time.Second}
+	if err := as.ListenAndServe(); err != nil {
+		logger.Error("admin API stopped", "err", err)
 	}
 }
 

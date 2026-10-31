@@ -7,6 +7,7 @@ package main
 
 import (
 	"log/slog"
+	"net/http"
 	"os"
 
 	"github.com/athenanetworks/cmr-server/pkg/cmr"
@@ -53,9 +54,21 @@ func main() {
 		os.Exit(1)
 	}
 
+	// The same registry control is reachable over HTTP: srv.AdminHandler() serves
+	// list/inspect devices and set/clear per-device config as JSON. Mount it on your
+	// own mux behind your own auth; here it is guarded by a shared bearer token on a
+	// loopback address. See the Embedding section of the README for the routes.
+	go func() {
+		admin := controller.BearerAuth("s3cret", srv.AdminHandler())
+		logger.Info("admin API on 127.0.0.1:8080 (Bearer s3cret)")
+		if err := http.ListenAndServe("127.0.0.1:8080", admin); err != nil {
+			logger.Error("admin", "err", err)
+		}
+	}()
+
 	// srv.Devices() lists every known device (connected or not); srv.Device(id)
-	// and srv.SetDesiredConfig(id, graph) drive one by its stable id — e.g. from
-	// an HTTP admin handler or a control loop.
+	// and srv.SetDesiredConfig(id, graph) drive one by its stable id — from the
+	// admin API above or any in-process control loop.
 	logger.Info("cmr controller embedded; point devices at this host:54321",
 		"fingerprint", controller.Fingerprint(cert), "known_devices", len(srv.Devices()))
 	if err := srv.ListenAndServe("0.0.0.0:54321"); err != nil {
