@@ -1,0 +1,2052 @@
+[
+  {
+    "id": 512,
+    "name": "no",
+    "type": "unknown"
+  },
+  {
+    "id": 516,
+    "name": "hdd",
+    "type": "u32ro"
+  },
+  {
+    "id": 518,
+    "name": "Devices",
+    "type": "u32ro"
+  },
+  {
+    "id": 520,
+    "name": "waiting-for-load",
+    "type": "unknown"
+  },
+  {
+    "id": 1001,
+    "name": "arp",
+    "type": "unknown"
+  },
+  {
+    "id": 1129,
+    "name": "tx",
+    "type": "u32"
+  },
+  {
+    "id": 3841,
+    "name": "labels",
+    "type": "unknown"
+  },
+  {
+    "id": 4097,
+    "name": "chains",
+    "type": "unknown"
+  },
+  {
+    "id": 4100,
+    "name": "fronthaul",
+    "type": "unknown"
+  },
+  {
+    "id": 4100,
+    "name": "sta-mac",
+    "type": "unknown"
+  },
+  {
+    "id": 4102,
+    "name": "antenna-gain",
+    "type": "unknown"
+  },
+  {
+    "id": 4103,
+    "name": "distance",
+    "type": "unknown"
+  },
+  {
+    "id": 4106,
+    "name": "test.rts-mode",
+    "type": "unknown"
+  },
+  {
+    "id": 4110,
+    "name": "debug.flags",
+    "type": "u32"
+  },
+  {
+    "id": 4116,
+    "name": "atpc",
+    "type": "unknown"
+  },
+  {
+    "id": 4120,
+    "name": "qos-classifier",
+    "type": "u32"
+  },
+  {
+    "id": 4123,
+    "name": "ssid",
+    "type": "unknown"
+  },
+  {
+    "id": 4129,
+    "name": "installation",
+    "type": "unknown"
+  },
+  {
+    "id": 4130,
+    "name": "max-clients",
+    "type": "flag"
+  },
+  {
+    "id": 4131,
+    "name": "afc-policy",
+    "type": "unknown"
+  },
+  {
+    "id": 4133,
+    "name": "afc-cert-id",
+    "type": "unknown"
+  },
+  {
+    "id": 4134,
+    "name": "afc-latitude",
+    "type": "unknown"
+  },
+  {
+    "id": 4135,
+    "name": "afc-longitude",
+    "type": "unknown"
+  },
+  {
+    "id": 4138,
+    "name": "afc-secret",
+    "type": "unknown"
+  },
+  {
+    "id": 4139,
+    "name": "afc-serial",
+    "type": "unknown"
+  },
+  {
+    "id": 4140,
+    "name": "afc-auth-token",
+    "type": "unknown"
+  },
+  {
+    "id": 4141,
+    "name": "afc-debug-resp",
+    "type": "unknown"
+  },
+  {
+    "id": 4143,
+    "name": "afc-product-id",
+    "type": "unknown"
+  },
+  {
+    "id": 4145,
+    "name": "manager",
+    "type": "unknown"
+  },
+  {
+    "id": 4146,
+    "name": "afc-cert-check",
+    "type": "unknown"
+  },
+  {
+    "id": 4160,
+    "name": "aps-total",
+    "type": "unknown"
+  },
+  {
+    "id": 4161,
+    "name": "aps-run",
+    "type": "u32"
+  },
+  {
+    "id": 4162,
+    "name": "slaveaps-total",
+    "type": "u32"
+  },
+  {
+    "id": 4163,
+    "name": "aps-2g",
+    "type": "u32"
+  },
+  {
+    "id": 4164,
+    "name": "aps-5g",
+    "type": "u32"
+  },
+  {
+    "id": 4165,
+    "name": "aps-6g",
+    "type": "u32"
+  },
+  {
+    "id": 4166,
+    "name": "aps-be",
+    "type": "u32"
+  },
+  {
+    "id": 4167,
+    "name": "aps-ac",
+    "type": "u32"
+  },
+  {
+    "id": 4168,
+    "name": "aps-n",
+    "type": "u32"
+  },
+  {
+    "id": 4169,
+    "name": "aps-ofdm",
+    "type": "u32"
+  },
+  {
+    "id": 4170,
+    "name": "stas-total",
+    "type": "u32"
+  },
+  {
+    "id": 4171,
+    "name": "aps-ax",
+    "type": "u32"
+  },
+  {
+    "id": 4176,
+    "name": "stas-2ghz",
+    "type": "u32"
+  },
+  {
+    "id": 4177,
+    "name": "stas-5ghz",
+    "type": "u32"
+  },
+  {
+    "id": 4178,
+    "name": "stas-6ghz",
+    "type": "u32"
+  },
+  {
+    "id": 4179,
+    "name": "stas-open",
+    "type": "u32"
+  },
+  {
+    "id": 4180,
+    "name": "stas-wpa",
+    "type": "u32"
+  },
+  {
+    "id": 4181,
+    "name": "stas-wpa2",
+    "type": "u32"
+  },
+  {
+    "id": 4182,
+    "name": "stas-wpa3",
+    "type": "u32"
+  },
+  {
+    "id": 4183,
+    "name": "stas-eap",
+    "type": "u32"
+  },
+  {
+    "id": 4184,
+    "name": "stas-ft",
+    "type": "u32"
+  },
+  {
+    "id": 4185,
+    "name": "stas-be",
+    "type": "u32"
+  },
+  {
+    "id": 4186,
+    "name": "stas-ac",
+    "type": "u32"
+  },
+  {
+    "id": 4187,
+    "name": "stas-n",
+    "type": "u32"
+  },
+  {
+    "id": 4188,
+    "name": "stas-ofdm",
+    "type": "u32"
+  },
+  {
+    "id": 4189,
+    "name": "bw-total-down",
+    "type": "u32"
+  },
+  {
+    "id": 4190,
+    "name": "stas-ax",
+    "type": "u32"
+  },
+  {
+    "id": 4208,
+    "name": "bw-total-up",
+    "type": "u32ro"
+  },
+  {
+    "id": 4209,
+    "name": "ap-freqs",
+    "type": "u32ro"
+  },
+  {
+    "id": 7680,
+    "name": "configuration.antenna-gain",
+    "type": "unknown"
+  },
+  {
+    "id": 8192,
+    "name": "password",
+    "type": "unknown"
+  },
+  {
+    "id": 8193,
+    "name": "ids",
+    "type": "unknown"
+  },
+  {
+    "id": 8193,
+    "name": "wpa-psk",
+    "type": "u32"
+  },
+  {
+    "id": 8194,
+    "name": "tkip",
+    "type": "u32"
+  },
+  {
+    "id": 8196,
+    "name": "conf-ssid",
+    "type": "unknown"
+  },
+  {
+    "id": 8196,
+    "name": "pmk",
+    "type": "unknown"
+  },
+  {
+    "id": 8197,
+    "name": "fri",
+    "type": "string"
+  },
+  {
+    "id": 8198,
+    "name": "version",
+    "type": "string"
+  },
+  {
+    "id": 8199,
+    "name": "ft",
+    "type": "unknown"
+  },
+  {
+    "id": 8199,
+    "name": "security.ft",
+    "type": "flag"
+  },
+  {
+    "id": 8201,
+    "name": "address",
+    "type": "string"
+  },
+  {
+    "id": 8201,
+    "name": "pending",
+    "type": "string"
+  },
+  {
+    "id": 8201,
+    "name": "security.wps",
+    "type": "u32"
+  },
+  {
+    "id": 8201,
+    "name": "wps",
+    "type": "unknown"
+  },
+  {
+    "id": 8203,
+    "name": "labels",
+    "type": "u32"
+  },
+  {
+    "id": 8204,
+    "name": "sae-pwe",
+    "type": "unknown"
+  },
+  {
+    "id": 8205,
+    "name": "eap-methods",
+    "type": "unknown"
+  },
+  {
+    "id": 8206,
+    "name": "eap-accounting",
+    "type": "unknown"
+  },
+  {
+    "id": 8207,
+    "name": "eap-password",
+    "type": "unknown"
+  },
+  {
+    "id": 8210,
+    "name": "eap-username",
+    "type": "unknown"
+  },
+  {
+    "id": 8210,
+    "name": "labels",
+    "type": "unknown"
+  },
+  {
+    "id": 8211,
+    "name": "port-labels",
+    "type": "unknown"
+  },
+  {
+    "id": 8212,
+    "name": "port-labels",
+    "type": "unknown"
+  },
+  {
+    "id": 8213,
+    "name": "ft-over-ds",
+    "type": "unknown"
+  },
+  {
+    "id": 8227,
+    "name": "connect-group",
+    "type": "unknown"
+  },
+  {
+    "id": 8231,
+    "name": "dpp-pmkid",
+    "type": "unknown"
+  },
+  {
+    "id": 8232,
+    "name": "dpp-connector",
+    "type": "unknown"
+  },
+  {
+    "id": 8235,
+    "name": "dpp-csign",
+    "type": "unknown"
+  },
+  {
+    "id": 8449,
+    "name": "dh-groups",
+    "type": "unknown"
+  },
+  {
+    "id": 8449,
+    "name": "upgrade-rule",
+    "type": "string"
+  },
+  {
+    "id": 8450,
+    "name": "board",
+    "type": "u32"
+  },
+  {
+    "id": 8451,
+    "name": "channel",
+    "type": "u32"
+  },
+  {
+    "id": 8469,
+    "name": "connected-time",
+    "type": "string"
+  },
+  {
+    "id": 8474,
+    "name": "remote-pending",
+    "type": "flag"
+  },
+  {
+    "id": 8475,
+    "name": "I",
+    "type": "flag"
+  },
+  {
+    "id": 8475,
+    "name": "inactive",
+    "type": "flag"
+  },
+  {
+    "id": 8477,
+    "name": "connected",
+    "type": "flag"
+  },
+  {
+    "id": 8478,
+    "name": "alerts",
+    "type": "u32"
+  },
+  {
+    "id": 8707,
+    "name": "critical",
+    "type": "u32"
+  },
+  {
+    "id": 8708,
+    "name": "high",
+    "type": "u32"
+  },
+  {
+    "id": 8709,
+    "name": "medium",
+    "type": "u32"
+  },
+  {
+    "id": 8710,
+    "name": "low",
+    "type": "u32"
+  },
+  {
+    "id": 8968,
+    "name": "fetch-comments",
+    "type": "flag"
+  },
+  {
+    "id": 8971,
+    "name": "apptraffic-devices",
+    "type": "unknown"
+  },
+  {
+    "id": 8972,
+    "name": "version",
+    "type": "u32"
+  },
+  {
+    "id": 8973,
+    "name": "flag",
+    "type": "u32"
+  },
+  {
+    "id": 9218,
+    "name": "username",
+    "type": "string"
+  },
+  {
+    "id": 9472,
+    "name": "order",
+    "type": "unknown"
+  },
+  {
+    "id": 9483,
+    "name": "on",
+    "type": "string"
+  },
+  {
+    "id": 9728,
+    "name": "starts-in",
+    "type": "u32"
+  },
+  {
+    "id": 9730,
+    "name": "success",
+    "type": "u32"
+  },
+  {
+    "id": 9731,
+    "name": "package",
+    "type": "u32"
+  },
+  {
+    "id": 9732,
+    "name": "total",
+    "type": "u32"
+  },
+  {
+    "id": 9741,
+    "name": "progress",
+    "type": "string"
+  },
+  {
+    "id": 9743,
+    "name": "end-time",
+    "type": "u32"
+  },
+  {
+    "id": 9984,
+    "name": "send",
+    "type": "string"
+  },
+  {
+    "id": 9985,
+    "name": "peer-id",
+    "type": "string"
+  },
+  {
+    "id": 9990,
+    "name": "error",
+    "type": "u32"
+  },
+  {
+    "id": 10240,
+    "name": "configuration.tx-power",
+    "type": "unknown"
+  },
+  {
+    "id": 10241,
+    "name": "cpu-above",
+    "type": "flag"
+  },
+  {
+    "id": 10242,
+    "name": "cpu-below",
+    "type": "u32"
+  },
+  {
+    "id": 10243,
+    "name": "hdd-below",
+    "type": "u32"
+  },
+  {
+    "id": 10244,
+    "name": "mem-below",
+    "type": "u32"
+  },
+  {
+    "id": 10245,
+    "name": "running",
+    "type": "u32"
+  },
+  {
+    "id": 10246,
+    "name": "ethernet",
+    "type": "u32"
+  },
+  {
+    "id": 10247,
+    "name": "success",
+    "type": "u32"
+  },
+  {
+    "id": 10248,
+    "name": "rebooted",
+    "type": "flag"
+  },
+  {
+    "id": 10251,
+    "name": "hdd-above",
+    "type": "u32"
+  },
+  {
+    "id": 10252,
+    "name": "mem-above",
+    "type": "u32"
+  },
+  {
+    "id": 10253,
+    "name": "health-above",
+    "type": "u32"
+  },
+  {
+    "id": 10254,
+    "name": "success",
+    "type": "u32"
+  },
+  {
+    "id": 10255,
+    "name": "log-topics",
+    "type": "flag"
+  },
+  {
+    "id": 10258,
+    "name": "action.log",
+    "type": "string"
+  },
+  {
+    "id": 10260,
+    "name": "health-below",
+    "type": "u32"
+  },
+  {
+    "id": 10261,
+    "name": "health-value",
+    "type": "u32"
+  },
+  {
+    "id": 10504,
+    "name": "action.script",
+    "type": "string"
+  },
+  {
+    "id": 10560,
+    "name": "severity",
+    "type": "u32"
+  },
+  {
+    "id": 10561,
+    "name": "category",
+    "type": "u32"
+  },
+  {
+    "id": 10627,
+    "name": "devices-on",
+    "type": "u32"
+  },
+  {
+    "id": 10629,
+    "name": "devices-all",
+    "type": "u32"
+  },
+  {
+    "id": 10629,
+    "name": "fired",
+    "type": "u32"
+  },
+  {
+    "id": 10758,
+    "name": "mikrotik",
+    "type": "flag"
+  },
+  {
+    "id": 11266,
+    "name": "band",
+    "type": "u32"
+  },
+  {
+    "id": 11267,
+    "name": "migrated",
+    "type": "u32"
+  },
+  {
+    "id": 11268,
+    "name": "rx-bps",
+    "type": "u32ro"
+  },
+  {
+    "id": 11269,
+    "name": "A",
+    "type": "u32ro"
+  },
+  {
+    "id": 11270,
+    "name": "tx-bps",
+    "type": "u32"
+  },
+  {
+    "id": 11940,
+    "name": "output",
+    "type": "string"
+  },
+  {
+    "id": 12097,
+    "name": "target-layout",
+    "type": "u32"
+  },
+  {
+    "id": 12098,
+    "name": "y",
+    "type": "u32"
+  },
+  {
+    "id": 12100,
+    "name": "x",
+    "type": "u32"
+  },
+  {
+    "id": 12160,
+    "name": "node1",
+    "type": "u32"
+  },
+  {
+    "id": 12161,
+    "name": "node2",
+    "type": "u32"
+  },
+  {
+    "id": 12162,
+    "name": "links",
+    "type": "u32"
+  },
+  {
+    "id": 12545,
+    "name": "fail-policy",
+    "type": "u32"
+  },
+  {
+    "id": 12546,
+    "name": "dynamic",
+    "type": "u32"
+  },
+  {
+    "id": 16385,
+    "name": "mld-name",
+    "type": "unknown"
+  },
+  {
+    "id": 16386,
+    "name": "hide-ssid",
+    "type": "u32"
+  },
+  {
+    "id": 16390,
+    "name": "mld-interface",
+    "type": "unknown"
+  },
+  {
+    "id": 16394,
+    "name": "name",
+    "type": "unknown"
+  },
+  {
+    "id": 24576,
+    "name": "channel.frequency",
+    "type": "unknown"
+  },
+  {
+    "id": 24578,
+    "name": "block-tx",
+    "type": "unknown"
+  },
+  {
+    "id": 24578,
+    "name": "channel.width",
+    "type": "u32"
+  },
+  {
+    "id": 24578,
+    "name": "width",
+    "type": "unknown"
+  },
+  {
+    "id": 24588,
+    "name": "end",
+    "type": "u32"
+  },
+  {
+    "id": 24589,
+    "name": "range-step",
+    "type": "u32"
+  },
+  {
+    "id": 25600,
+    "name": "cpu-above",
+    "type": "unknown"
+  },
+  {
+    "id": 25600,
+    "name": "cpu-below",
+    "type": "unknown"
+  },
+  {
+    "id": 25600,
+    "name": "hdd-above",
+    "type": "unknown"
+  },
+  {
+    "id": 25600,
+    "name": "hdd-below",
+    "type": "unknown"
+  },
+  {
+    "id": 25600,
+    "name": "mem-above",
+    "type": "unknown"
+  },
+  {
+    "id": 25600,
+    "name": "mem-below",
+    "type": "unknown"
+  },
+  {
+    "id": 28672,
+    "name": "running",
+    "type": "unknown"
+  },
+  {
+    "id": 28673,
+    "name": "X",
+    "type": "unknown"
+  },
+  {
+    "id": 28673,
+    "name": "inactive",
+    "type": "unknown"
+  },
+  {
+    "id": 28674,
+    "name": "D",
+    "type": "unknown"
+  },
+  {
+    "id": 28674,
+    "name": "dynamic",
+    "type": "unknown"
+  },
+  {
+    "id": 28680,
+    "name": "origin",
+    "type": "unknown"
+  },
+  {
+    "id": 28681,
+    "name": "B",
+    "type": "unknown"
+  },
+  {
+    "id": 28681,
+    "name": "bound",
+    "type": "unknown"
+  },
+  {
+    "id": 30723,
+    "name": "ap-address",
+    "type": "unknown"
+  },
+  {
+    "id": 30727,
+    "name": "afc-sp-rules",
+    "type": "unknown"
+  },
+  {
+    "id": 30730,
+    "name": "mld-link-id",
+    "type": "unknown"
+  },
+  {
+    "id": 32770,
+    "name": "paired",
+    "type": "u32"
+  },
+  {
+    "id": 32771,
+    "name": "min",
+    "type": "u32"
+  },
+  {
+    "id": 32790,
+    "name": "avg",
+    "type": "u32"
+  },
+  {
+    "id": 33030,
+    "name": "bw",
+    "type": "u32"
+  },
+  {
+    "id": 33031,
+    "name": "pvid",
+    "type": "u32"
+  },
+  {
+    "id": 33034,
+    "name": "master",
+    "type": "u32"
+  },
+  {
+    "id": 33038,
+    "name": "mld-interface",
+    "type": "string"
+  },
+  {
+    "id": 33039,
+    "name": "capsman",
+    "type": "flag"
+  },
+  {
+    "id": 33040,
+    "name": "peer-interface",
+    "type": "u32"
+  },
+  {
+    "id": 33042,
+    "name": "cap",
+    "type": "string"
+  },
+  {
+    "id": 33043,
+    "name": "cap-interface",
+    "type": "u32"
+  },
+  {
+    "id": 33049,
+    "name": "MLD",
+    "type": "misc"
+  },
+  {
+    "id": 34048,
+    "name": "spacer",
+    "type": "string"
+  },
+  {
+    "id": 34049,
+    "name": "load",
+    "type": "u32"
+  },
+  {
+    "id": 34052,
+    "name": "count",
+    "type": "u32"
+  },
+  {
+    "id": 34053,
+    "name": "ifaces",
+    "type": "u32"
+  },
+  {
+    "id": 34054,
+    "name": "pbar",
+    "type": "u32"
+  },
+  {
+    "id": 34057,
+    "name": "open",
+    "type": "unknown"
+  },
+  {
+    "id": 36866,
+    "name": "signal-range",
+    "type": "unknown"
+  },
+  {
+    "id": 36872,
+    "name": "time",
+    "type": "unknown"
+  },
+  {
+    "id": 36879,
+    "name": "last-logged-in",
+    "type": "unknown"
+  },
+  {
+    "id": 36885,
+    "name": "match-count",
+    "type": "unknown"
+  },
+  {
+    "id": 40963,
+    "name": "called-format",
+    "type": "unknown"
+  },
+  {
+    "id": 40964,
+    "name": "calling-format",
+    "type": "unknown"
+  },
+  {
+    "id": 40965,
+    "name": "mac-caching",
+    "type": "unknown"
+  },
+  {
+    "id": 40966,
+    "name": "labels",
+    "type": "unknown"
+  },
+  {
+    "id": 45057,
+    "name": "save-file",
+    "type": "unknown"
+  },
+  {
+    "id": 45826,
+    "name": "networks",
+    "type": "unknown"
+  },
+  {
+    "id": 45827,
+    "name": "load",
+    "type": "unknown"
+  },
+  {
+    "id": 45828,
+    "name": "nf",
+    "type": "unknown"
+  },
+  {
+    "id": 45829,
+    "name": "srp-networks",
+    "type": "unknown"
+  },
+  {
+    "id": 45830,
+    "name": "min-signal",
+    "type": "unknown"
+  },
+  {
+    "id": 45831,
+    "name": "max-signal",
+    "type": "unknown"
+  },
+  {
+    "id": 45832,
+    "name": "secondary",
+    "type": "unknown"
+  },
+  {
+    "id": 45834,
+    "name": "srp-load",
+    "type": "unknown"
+  },
+  {
+    "id": 45836,
+    "name": "radar",
+    "type": "unknown"
+  },
+  {
+    "id": 45837,
+    "name": "primary",
+    "type": "unknown"
+  },
+  {
+    "id": 46081,
+    "name": "bssid",
+    "type": "unknown"
+  },
+  {
+    "id": 46081,
+    "name": "phy-id",
+    "type": "unknown"
+  },
+  {
+    "id": 46082,
+    "name": "dev.lp-info",
+    "type": "unknown"
+  },
+  {
+    "id": 46087,
+    "name": "band-widths",
+    "type": "unknown"
+  },
+  {
+    "id": 46090,
+    "name": "countries",
+    "type": "unknown"
+  },
+  {
+    "id": 46096,
+    "name": "max-interfaces",
+    "type": "unknown"
+  },
+  {
+    "id": 46097,
+    "name": "hw-type",
+    "type": "unknown"
+  },
+  {
+    "id": 46099,
+    "name": "max-peers",
+    "type": "unknown"
+  },
+  {
+    "id": 46105,
+    "name": "afc-deployment",
+    "type": "unknown"
+  },
+  {
+    "id": 46106,
+    "name": "local",
+    "type": "unknown"
+  },
+  {
+    "id": 46113,
+    "name": "hw-caps",
+    "type": "unknown"
+  },
+  {
+    "id": 46598,
+    "name": "slaves-static",
+    "type": "unknown"
+  },
+  {
+    "id": 46601,
+    "name": "mld-static",
+    "type": "unknown"
+  },
+  {
+    "id": 46602,
+    "name": "mld-datapath",
+    "type": "unknown"
+  },
+  {
+    "id": 47107,
+    "name": "package-path",
+    "type": "unknown"
+  },
+  {
+    "id": 47108,
+    "name": "upgrade-policy",
+    "type": "unknown"
+  },
+  {
+    "id": 47362,
+    "name": "board-name",
+    "type": "unknown"
+  },
+  {
+    "id": 47363,
+    "name": "serial",
+    "type": "unknown"
+  },
+  {
+    "id": 47364,
+    "name": "version",
+    "type": "unknown"
+  },
+  {
+    "id": 47365,
+    "name": "base-mac",
+    "type": "unknown"
+  },
+  {
+    "id": 47366,
+    "name": "common-name",
+    "type": "unknown"
+  },
+  {
+    "id": 47367,
+    "name": "state",
+    "type": "unknown"
+  },
+  {
+    "id": 47368,
+    "name": "connected-time",
+    "type": "unknown"
+  },
+  {
+    "id": 47618,
+    "name": "address-ranges",
+    "type": "unknown"
+  },
+  {
+    "id": 47637,
+    "name": "name-format",
+    "type": "unknown"
+  },
+  {
+    "id": 47872,
+    "name": "bridge-cost",
+    "type": "unknown"
+  },
+  {
+    "id": 47873,
+    "name": "bridge-horizon",
+    "type": "unknown"
+  },
+  {
+    "id": 47878,
+    "name": "interface-list",
+    "type": "unknown"
+  },
+  {
+    "id": 47878,
+    "name": "mlo",
+    "type": "u32"
+  },
+  {
+    "id": 47879,
+    "name": "batman-adv",
+    "type": "unknown"
+  },
+  {
+    "id": 48131,
+    "name": "show-frame",
+    "type": "unknown"
+  },
+  {
+    "id": 48133,
+    "name": "pcap-file",
+    "type": "unknown"
+  },
+  {
+    "id": 48134,
+    "name": "stream-address",
+    "type": "unknown"
+  },
+  {
+    "id": 48136,
+    "name": "stream-rate",
+    "type": "unknown"
+  },
+  {
+    "id": 48385,
+    "name": "bhaul-ssid",
+    "type": "unknown"
+  },
+  {
+    "id": 48390,
+    "name": "agent-state",
+    "type": "unknown"
+  },
+  {
+    "id": 49153,
+    "name": "dhcp-address",
+    "type": "unknown"
+  },
+  {
+    "id": 49155,
+    "name": "tx-packets",
+    "type": "unknown"
+  },
+  {
+    "id": 49160,
+    "name": "rx",
+    "type": "unknown"
+  },
+  {
+    "id": 49161,
+    "name": "tx-l-packets",
+    "type": "unknown"
+  },
+  {
+    "id": 49163,
+    "name": "tx-l-bytes",
+    "type": "unknown"
+  },
+  {
+    "id": 49165,
+    "name": "rx-rate",
+    "type": "unknown"
+  },
+  {
+    "id": 49166,
+    "name": "eap-identity",
+    "type": "unknown"
+  },
+  {
+    "id": 49169,
+    "name": "authorized",
+    "type": "unknown"
+  },
+  {
+    "id": 49170,
+    "name": "mfp",
+    "type": "unknown"
+  },
+  {
+    "id": 49176,
+    "name": "auth-type",
+    "type": "unknown"
+  },
+  {
+    "id": 49186,
+    "name": "debug-state",
+    "type": "unknown"
+  },
+  {
+    "id": 49188,
+    "name": "uptime",
+    "type": "unknown"
+  },
+  {
+    "id": 49666,
+    "name": "steering.wnm",
+    "type": "unknown"
+  },
+  {
+    "id": 49666,
+    "name": "wnm",
+    "type": "unknown"
+  },
+  {
+    "id": 49667,
+    "name": "2g-probe-delay",
+    "type": "unknown"
+  },
+  {
+    "id": 53248,
+    "name": "internet",
+    "type": "unknown"
+  },
+  {
+    "id": 53249,
+    "name": "esr",
+    "type": "unknown"
+  },
+  {
+    "id": 53251,
+    "name": "uesa",
+    "type": "unknown"
+  },
+  {
+    "id": 53252,
+    "name": "venue",
+    "type": "unknown"
+  },
+  {
+    "id": 53253,
+    "name": "hessid",
+    "type": "unknown"
+  },
+  {
+    "id": 53254,
+    "name": "hotspot20",
+    "type": "unknown"
+  },
+  {
+    "id": 53255,
+    "name": "hotspot20-dgaf",
+    "type": "unknown"
+  },
+  {
+    "id": 53256,
+    "name": "roaming-ois",
+    "type": "unknown"
+  },
+  {
+    "id": 53260,
+    "name": "realms",
+    "type": "unknown"
+  },
+  {
+    "id": 53263,
+    "name": "domain-names",
+    "type": "unknown"
+  },
+  {
+    "id": 53267,
+    "name": "wan-symmetric",
+    "type": "unknown"
+  },
+  {
+    "id": 53269,
+    "name": "wan-downlink",
+    "type": "unknown"
+  },
+  {
+    "id": 53270,
+    "name": "wan-uplink",
+    "type": "unknown"
+  },
+  {
+    "id": 53505,
+    "name": "manufacturer",
+    "type": "unknown"
+  },
+  {
+    "id": 53506,
+    "name": "dpp-uri",
+    "type": "unknown"
+  },
+  {
+    "id": 53521,
+    "name": "authentication",
+    "type": "unknown"
+  },
+  {
+    "id": 53523,
+    "name": "eap-aka",
+    "type": "unknown"
+  },
+  {
+    "id": 53524,
+    "name": "model",
+    "type": "unknown"
+  },
+  {
+    "id": 53767,
+    "name": "phy",
+    "type": "unknown"
+  },
+  {
+    "id": 53770,
+    "name": "default",
+    "type": "unknown"
+  },
+  {
+    "id": 53771,
+    "name": "bss-tm-req",
+    "type": "unknown"
+  },
+  {
+    "id": 54016,
+    "name": "save-pcap",
+    "type": "u32"
+  },
+  {
+    "id": 54528,
+    "name": "bss-on-time",
+    "type": "unknown"
+  },
+  {
+    "id": 54537,
+    "name": "rate-mbps",
+    "type": "unknown"
+  },
+  {
+    "id": 54538,
+    "name": "first-beacon",
+    "type": "unknown"
+  },
+  {
+    "id": 54546,
+    "name": "snr",
+    "type": "unknown"
+  },
+  {
+    "id": 54547,
+    "name": "erp-info",
+    "type": "unknown"
+  },
+  {
+    "id": 54549,
+    "name": "beacon-size",
+    "type": "unknown"
+  },
+  {
+    "id": 54550,
+    "name": "last-seen",
+    "type": "unknown"
+  },
+  {
+    "id": 54552,
+    "name": "bss-count",
+    "type": "unknown"
+  },
+  {
+    "id": 54553,
+    "name": "noise",
+    "type": "unknown"
+  },
+  {
+    "id": 54569,
+    "name": "bss-address",
+    "type": "unknown"
+  },
+  {
+    "id": 54784,
+    "name": "dev.pwr-mode",
+    "type": "unknown"
+  },
+  {
+    "id": 54790,
+    "name": "peak",
+    "type": "unknown"
+  },
+  {
+    "id": 54793,
+    "name": "peak-mode",
+    "type": "unknown"
+  },
+  {
+    "id": 54795,
+    "name": "dev.bin-scale",
+    "type": "unknown"
+  },
+  {
+    "id": 54796,
+    "name": "dbm",
+    "type": "unknown"
+  },
+  {
+    "id": 54796,
+    "name": "magn",
+    "type": "unknown"
+  },
+  {
+    "id": 54797,
+    "name": "rssi",
+    "type": "unknown"
+  },
+  {
+    "id": 54802,
+    "name": "dev.period",
+    "type": "unknown"
+  },
+  {
+    "id": 54803,
+    "name": "dev.class-gain",
+    "type": "unknown"
+  },
+  {
+    "id": 54804,
+    "name": "dev.dbm-adj",
+    "type": "unknown"
+  },
+  {
+    "id": 54806,
+    "name": "range",
+    "type": "unknown"
+  },
+  {
+    "id": 55040,
+    "name": "disable-pmkid",
+    "type": "unknown"
+  },
+  {
+    "id": 55041,
+    "name": "vlan-id",
+    "type": "unknown"
+  },
+  {
+    "id": 55042,
+    "name": "expires",
+    "type": "unknown"
+  },
+  {
+    "id": 55043,
+    "name": "expired",
+    "type": "unknown"
+  },
+  {
+    "id": 55044,
+    "name": "isolation",
+    "type": "unknown"
+  },
+  {
+    "id": 55296,
+    "name": "wifi-log-time",
+    "type": "unknown"
+  },
+  {
+    "id": 55424,
+    "name": "last-ap",
+    "type": "mac"
+  },
+  {
+    "id": 55425,
+    "name": "active",
+    "type": "flag"
+  },
+  {
+    "id": 55426,
+    "name": "disconn",
+    "type": "u32"
+  },
+  {
+    "id": 55427,
+    "name": "fail",
+    "type": "unknown"
+  },
+  {
+    "id": 55428,
+    "name": "ip-address",
+    "type": "u32"
+  },
+  {
+    "id": 55429,
+    "name": "conn",
+    "type": "mac"
+  },
+  {
+    "id": 55431,
+    "name": "last-ap",
+    "type": "unknown"
+  },
+  {
+    "id": 55553,
+    "name": "qr-uri",
+    "type": "unknown"
+  },
+  {
+    "id": 55554,
+    "name": "hash",
+    "type": "unknown"
+  },
+  {
+    "id": 55555,
+    "name": "bssid",
+    "type": "mac"
+  },
+  {
+    "id": 55555,
+    "name": "own",
+    "type": "unknown"
+  },
+  {
+    "id": 55556,
+    "name": "der",
+    "type": "unknown"
+  },
+  {
+    "id": 55556,
+    "name": "event",
+    "type": "mac"
+  },
+  {
+    "id": 55556,
+    "name": "signal",
+    "type": "mac"
+  },
+  {
+    "id": 55557,
+    "name": "auth-type",
+    "type": "u32"
+  },
+  {
+    "id": 55558,
+    "name": "channels",
+    "type": "unknown"
+  },
+  {
+    "id": 55558,
+    "name": "tx-bytes",
+    "type": "u32"
+  },
+  {
+    "id": 55559,
+    "name": "qr-code",
+    "type": "unknown"
+  },
+  {
+    "id": 55559,
+    "name": "rx-bytes",
+    "type": "u32"
+  },
+  {
+    "id": 55560,
+    "name": "reason",
+    "type": "u32"
+  },
+  {
+    "id": 55561,
+    "name": "peer-version",
+    "type": "unknown"
+  },
+  {
+    "id": 55564,
+    "name": "chan",
+    "type": "unknown"
+  },
+  {
+    "id": 55566,
+    "name": "time-start",
+    "type": "u32"
+  },
+  {
+    "id": 55567,
+    "name": "dpp-ppkey",
+    "type": "unknown"
+  },
+  {
+    "id": 55570,
+    "name": "peer-addr",
+    "type": "unknown"
+  },
+  {
+    "id": 55571,
+    "name": "auth-types",
+    "type": "unknown"
+  },
+  {
+    "id": 55572,
+    "name": "pmkid",
+    "type": "unknown"
+  },
+  {
+    "id": 55573,
+    "name": "connector",
+    "type": "unknown"
+  },
+  {
+    "id": 55574,
+    "name": "connector-hdr",
+    "type": "unknown"
+  },
+  {
+    "id": 55578,
+    "name": "bootstrap-info",
+    "type": "unknown"
+  },
+  {
+    "id": 55580,
+    "name": "values",
+    "type": "unknown"
+  },
+  {
+    "id": 55581,
+    "name": "error",
+    "type": "unknown"
+  },
+  {
+    "id": 55809,
+    "name": "backhaul",
+    "type": "unknown"
+  },
+  {
+    "id": 55810,
+    "name": "utilization",
+    "type": "unknown"
+  },
+  {
+    "id": 55812,
+    "name": "sta-count",
+    "type": "unknown"
+  },
+  {
+    "id": 55813,
+    "name": "opclass",
+    "type": "unknown"
+  },
+  {
+    "id": 55816,
+    "name": "primary-chan",
+    "type": "unknown"
+  },
+  {
+    "id": 55817,
+    "name": "ieee-chan",
+    "type": "unknown"
+  },
+  {
+    "id": 55818,
+    "name": "time-delta",
+    "type": "unknown"
+  },
+  {
+    "id": 56065,
+    "name": "wifi-band",
+    "type": "unknown"
+  },
+  {
+    "id": 56067,
+    "name": "devel-deauth",
+    "type": "unknown"
+  },
+  {
+    "id": 57090,
+    "name": "next-hop",
+    "type": "unknown"
+  },
+  {
+    "id": 57091,
+    "name": "hops",
+    "type": "unknown"
+  },
+  {
+    "id": 57092,
+    "name": "sn",
+    "type": "unknown"
+  },
+  {
+    "id": 57093,
+    "name": "expiration",
+    "type": "unknown"
+  },
+  {
+    "id": 57094,
+    "name": "packets-queued",
+    "type": "unknown"
+  },
+  {
+    "id": 57097,
+    "name": "resolving",
+    "type": "unknown"
+  },
+  {
+    "id": 57098,
+    "name": "sn-valid",
+    "type": "unknown"
+  },
+  {
+    "id": 57099,
+    "name": "fixed",
+    "type": "unknown"
+  },
+  {
+    "id": 57100,
+    "name": "resolved",
+    "type": "unknown"
+  },
+  {
+    "id": 57102,
+    "name": "path-changes",
+    "type": "unknown"
+  },
+  {
+    "id": 57103,
+    "name": "metric",
+    "type": "unknown"
+  },
+  {
+    "id": 65281,
+    "name": "dtim-period",
+    "type": "unknown"
+  },
+  {
+    "id": 65535,
+    "name": "10mhz",
+    "type": "unknown"
+  },
+  {
+    "id": 65535,
+    "name": "5mhz",
+    "type": "unknown"
+  },
+  {
+    "id": 65535,
+    "name": "added",
+    "type": "unknown"
+  },
+  {
+    "id": 65535,
+    "name": "address",
+    "type": "unknown"
+  },
+  {
+    "id": 65535,
+    "name": "architecture",
+    "type": "unknown"
+  },
+  {
+    "id": 65535,
+    "name": "bit-4",
+    "type": "unknown"
+  },
+  {
+    "id": 65535,
+    "name": "bit-5",
+    "type": "unknown"
+  },
+  {
+    "id": 65535,
+    "name": "bit-6",
+    "type": "unknown"
+  },
+  {
+    "id": 65535,
+    "name": "bit-7",
+    "type": "unknown"
+  },
+  {
+    "id": 65535,
+    "name": "board-name",
+    "type": "unknown"
+  },
+  {
+    "id": 65535,
+    "name": "ccmp",
+    "type": "unknown"
+  },
+  {
+    "id": 65535,
+    "name": "ccmp-256",
+    "type": "unknown"
+  },
+  {
+    "id": 65535,
+    "name": "disable-fils",
+    "type": "unknown"
+  },
+  {
+    "id": 65535,
+    "name": "ethernet",
+    "type": "unknown"
+  },
+  {
+    "id": 65535,
+    "name": "fail",
+    "type": "unknown"
+  },
+  {
+    "id": 65535,
+    "name": "gcmp",
+    "type": "unknown"
+  },
+  {
+    "id": 65535,
+    "name": "gcmp-256",
+    "type": "unknown"
+  },
+  {
+    "id": 65535,
+    "name": "identity",
+    "type": "unknown"
+  },
+  {
+    "id": 65535,
+    "name": "ignore-scripts",
+    "type": "unknown"
+  },
+  {
+    "id": 65535,
+    "name": "model",
+    "type": "unknown"
+  },
+  {
+    "id": 65535,
+    "name": "not-running",
+    "type": "unknown"
+  },
+  {
+    "id": 65535,
+    "name": "owe",
+    "type": "unknown"
+  },
+  {
+    "id": 65535,
+    "name": "running",
+    "type": "unknown"
+  },
+  {
+    "id": 65535,
+    "name": "save-pcap",
+    "type": "unknown"
+  },
+  {
+    "id": 65535,
+    "name": "success",
+    "type": "unknown"
+  },
+  {
+    "id": 65535,
+    "name": "tkip",
+    "type": "unknown"
+  },
+  {
+    "id": 65535,
+    "name": "version",
+    "type": "unknown"
+  },
+  {
+    "id": 65535,
+    "name": "wifi",
+    "type": "unknown"
+  },
+  {
+    "id": 65535,
+    "name": "wpa-eap",
+    "type": "unknown"
+  },
+  {
+    "id": 65535,
+    "name": "wpa-psk",
+    "type": "unknown"
+  },
+  {
+    "id": 65535,
+    "name": "wpa2-eap",
+    "type": "unknown"
+  },
+  {
+    "id": 65535,
+    "name": "wpa2-psk",
+    "type": "unknown"
+  },
+  {
+    "id": 65535,
+    "name": "wpa2-psk-sha2",
+    "type": "unknown"
+  },
+  {
+    "id": 65535,
+    "name": "wpa3-eap",
+    "type": "unknown"
+  },
+  {
+    "id": 65535,
+    "name": "wpa3-eap-192",
+    "type": "unknown"
+  },
+  {
+    "id": 65535,
+    "name": "wpa3-psk",
+    "type": "unknown"
+  },
+  {
+    "id": 65535,
+    "name": "wpa3-psk-gd",
+    "type": "unknown"
+  }
+]

@@ -69,6 +69,31 @@ func TestBuildVLANConfigBridgeName(t *testing.T) {
 	}
 }
 
+// TestParseVLANConfig checks BuildVLANConfig and ParseVLANConfig are inverses.
+func TestParseVLANConfig(t *testing.T) {
+	cases := []VLANConfig{
+		{VLANID: 100, BridgeName: DefaultBridgeName},
+		{VLANID: 1, BridgeName: DefaultBridgeName},
+		{VLANID: 300, BridgeName: "office-net"},
+		{VLANID: 4094, BridgeName: "a"},
+	}
+	for _, want := range cases {
+		got, ok := ParseVLANConfig(BuildVLANConfig(want))
+		if !ok {
+			t.Errorf("ParseVLANConfig(%+v) failed", want)
+			continue
+		}
+		if got != want {
+			t.Errorf("round-trip: got %+v, want %+v", got, want)
+		}
+	}
+	// The captured golden parses to vlan 100 / default bridge.
+	raw, _ := hex.DecodeString(goldenVLAN100)
+	if got, ok := ParseVLANConfig(raw); !ok || got != (VLANConfig{VLANID: 100, BridgeName: DefaultBridgeName}) {
+		t.Fatalf("golden parse = %+v ok=%v", got, ok)
+	}
+}
+
 // TestBuildVLANConfigWellFormed walks the graph as an m3 chunk stream and
 // checks it consumes cleanly with no trailing bytes — the structural invariant
 // the device relies on.

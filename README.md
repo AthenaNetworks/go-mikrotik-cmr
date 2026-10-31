@@ -23,6 +23,7 @@ and research project.
 | Object-sync dump driven live by **our** controller | **Working, verified live** — a stock device syncs and dumps its full state to `cmd/cmr-ctrl`, 0 not-found, no PKEX; see [Protocol notes](#protocol-notes) |
 | Config **write** driven live by **our** controller | **Working, verified live** — `cmd/cmr-ctrl -writefile` makes a stock device build a MANAGED `cmr-bridge` (vlan-filtering, `ether1` pvid=100), no RouterOS controller in the path; see [Protocol notes](#protocol-notes) |
 | CMR vlan config **authored from structured input** (not replayed) | **Working, verified live** — `pkg/cmr.BuildVLANConfig` constructs the object graph; `cmd/cmr-ctrl -vlan N -bridgename X` pushes it and the device builds the bridge with the chosen vlan id + name (100/150/200/300 verified on the wire) |
+| Config graph **codec** (author, decode, round-trip) + attribute dictionary | **Working** — `pkg/cmr.Graph`/`DecodeGraph`/`Encode` round-trip a graph byte-for-byte; `ParseVLANConfig` is the inverse of `BuildVLANConfig`; the 410-attribute dictionary (`cmd/cmr-schema`) is embedded and queryable via `Attrs`/`AttrByName`/`AttrByID`; `cfgdump -tree` decodes structurally |
 
 The controller currently implements the **open pairing** path. Password (PKEX)
 pairing is a custom, TLS-channel-bound EC+HMAC PAKE inside `ssld` and is out of
@@ -59,13 +60,13 @@ See [docs/OPEN_PAIRING.md](docs/OPEN_PAIRING.md) and
 ```
 cmd/cmr-ctrl/    the controller a real device pairs+connects to (primary)
 pkg/m3/          byte-exact nv/m3 codec + continuous StreamDecoder
-pkg/cmr/         control-plane object model (descriptor + object decoding)
+pkg/cmr/         control-plane object model, config graph codec (Graph/BuildVLANConfig/DecodeGraph) + embedded attribute dictionary
 pkg/mtls/        minimal cert-tolerant TLS 1.2 client
 
 cmd/cmr-mitm/    TLS-terminating control-channel proxy (capture real traffic)
 cmd/capdump/     decode an nv/m3 capture (-timeline, -stream C|S)
 cmd/m3dump/      recursively decode hex m3 frames
-cmd/cfgdump/     decode a config object graph (id30 write payload) as a chunk tree
+cmd/cfgdump/     decode a config object graph (id30 write payload): chunk list, or -tree for the structured object/field view
 cmd/cmr-schema/  extract the config dictionary (nv id -> name -> type) from a RouterOS .mem
 cmd/cmr-dial/    connect to a real controller as a client and decode replies
 cmd/cmr-learn/   earlier controller bring-up probe
@@ -147,12 +148,23 @@ steady state (`-writedelay`). See
 `-writefile docs/samples/write-config-vlan100.hex`.
 
 That graph is **no longer a replay**: `pkg/cmr.BuildVLANConfig` authors it from a
-`VLANConfig{VLANID, BridgeName}`. The graph is a nested `m3` chunk stream (02 01 00
-header, objects of class `4a00c03f`/`c901c03f`, `02 00 00 01 <idx>` delimiters, a
-trailer); `BuildVLANConfig` parameterises the confirmed positions — the vlan id (a
-minimal-LE chunk) and the managed-bridge name — and carries the still-opaque
-schema fields verbatim. `cmd/cmr-ctrl -vlan 150 -bridgename athena-cmr` builds and
-writes it in-process, and a stock device builds the managed bridge accordingly
-(vlan ids 100/150/200/300 verified live). Mapping the remaining per-object fields
-(multiple vlans, wifi/device classes) is the next step — drive srv with varied
-`/cmr/…` config and diff the graphs.
+`VLANConfig{VLANID, BridgeName}` on top of a declarative graph model. The graph is
+a nested `m3` chunk stream (02 01 00 header, class-wrapped objects
+`4a00c03f`/`c901c03f`, `02 00 00 01 <idx>` delimiters, a trailer) exposed as
+`Graph`/`ConfigObject`; `Encode` and `DecodeGraph` round-trip it byte-for-byte, so
+a captured graph can be parsed, edited field by field and re-emitted
+(`ParseVLANConfig` is `BuildVLANConfig`'s inverse; `cfgdump -tree` shows the
+structured view). `cmd/cmr-ctrl -vlan 150 -bridgename athena-cmr` builds and writes
+it in-process, and a stock device builds the managed bridge accordingly (vlan ids
+100/150/200/300 verified live).
+
+The object body is **positional**, not nv-id-tagged: the confirmed slots (vlan id,
+bridge name) sit at fixed field positions under the generic wrapper, and the
+remaining schema positions are carried verbatim. The 410-attribute dictionary that
+`cmd/cmr-schema` extracts from the RouterOS console schema (`.mem`) describes the
+separate **control-plane** object model — it is embedded in `pkg/cmr`
+(`Attrs`/`AttrByName`/`AttrByID`) for decoding and validation, not as the push
+graph's field ids. See
+[docs/re/CMR_CONFIG_SCHEMA.md](docs/re/CMR_CONFIG_SCHEMA.md). Adding wifi/device/
+multi-vlan types means capturing a reference graph on hardware that can manifest it
+and declaring its `Graph` layout — the vlan type is the worked example.

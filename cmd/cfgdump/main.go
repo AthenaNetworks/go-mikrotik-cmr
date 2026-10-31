@@ -1,16 +1,18 @@
-// cfgdump decodes a CMR config object graph (the id30 write payload) as a linear
-// m3 chunk stream: for each chunk it prints the offset, intro kind (inline / run
-// / length-prefixed), raw bytes, little-endian integer and ASCII, labelling the
-// known class ids. Objects are themselves chunk streams, so pass an object body
-// to see its fields. This is the inverse view of pkg/cmr.BuildVLANConfig and the
-// tool for diffing two captured graphs field by field.
+// cfgdump decodes a CMR config object graph (the id30 write payload). By default
+// it prints the linear m3 chunk stream: for each chunk the offset, intro kind
+// (inline / run / length-prefixed), raw bytes, little-endian integer and ASCII,
+// labelling the known class ids. With -tree it decodes the graph structurally via
+// pkg/cmr.DecodeGraph — per object, the Entry and Value fields — and, when the
+// graph is a vlan config, prints the ParseVLANConfig result. It is the inverse
+// view of pkg/cmr.BuildVLANConfig and the tool for diffing captured graphs.
 //
-//	cfgdump <hexfile|hexstring>
+//	cfgdump [-tree] <hexfile|hexstring>
 package main
 
 import (
 	"encoding/binary"
 	"encoding/hex"
+	"flag"
 	"fmt"
 	"os"
 	"strings"
@@ -56,11 +58,13 @@ func classLabel(b []byte) string {
 }
 
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: cfgdump <hexfile|hexstring>")
+	tree := flag.Bool("tree", false, "decode structurally (objects and fields) via pkg/cmr.DecodeGraph")
+	flag.Parse()
+	if flag.NArg() < 1 {
+		fmt.Fprintln(os.Stderr, "usage: cfgdump [-tree] <hexfile|hexstring>")
 		os.Exit(2)
 	}
-	src := os.Args[1]
+	src := flag.Arg(0)
 	if raw, err := os.ReadFile(src); err == nil {
 		src = string(raw)
 	}
@@ -68,6 +72,10 @@ func main() {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "bad hex:", err)
 		os.Exit(1)
+	}
+	if *tree {
+		dumpTree(b)
+		return
 	}
 	fmt.Printf("# %d bytes\n", len(b))
 	for p := 0; p < len(b); {
@@ -90,4 +98,43 @@ func main() {
 			p, kind, hex.EncodeToString(data), le(data), asc(data), classLabel(data))
 		p += n
 	}
+}
+
+// dumpTree prints the structural decode: each object's Entry and Value fields,
+// and the VLANConfig if the graph parses as one.
+func dumpTree(b []byte) {
+	g, err := cmr.DecodeGraph(b)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "decode:", err)
+		os.Exit(1)
+	}
+	fmt.Printf("# graph: %d objects, trailer %x\n", len(g.Objects), g.Trailer)
+	for i, o := range g.Objects {
+		fmt.Printf("object %d:\n", i)
+		for j, c := range o.Entry {
+			fmt.Printf("  entry[%d] %-20s %s %s\n", j, hex.EncodeToString(c), le(c), field(c))
+		}
+		for j, c := range o.Value {
+			fmt.Printf("  value[%d] %-20s %s %s\n", j, hex.EncodeToString(c), le(c), field(c))
+		}
+	}
+	if v, ok := cmr.ParseVLANConfig(b); ok {
+		fmt.Printf("# VLANConfig: vlan-id=%d bridge=%q\n", v.VLANID, v.BridgeName)
+	}
+	if rt := g.Encode(); !strings.EqualFold(hex.EncodeToString(rt), hex.EncodeToString(b)) {
+		fmt.Fprintln(os.Stderr, "WARNING: re-encode does not match input")
+	}
+}
+
+// field annotates a chunk with its ASCII rendering when it is a printable string
+// (two or more printable bytes, e.g. a bridge name), not a short numeric value.
+func field(c []byte) string {
+	if len(c) < 2 {
+		return ""
+	}
+	a := asc(c)
+	if !strings.Contains(a, ".") {
+		return "|" + a + "|"
+	}
+	return ""
 }

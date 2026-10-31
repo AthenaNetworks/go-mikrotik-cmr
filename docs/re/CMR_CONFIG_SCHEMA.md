@@ -123,6 +123,48 @@ PyGhidra). The attribute accessors there are `message::get<nv::TYPE_id>(msg, ID)
 so the object body is an m3-folded (id, value) stream under the generic
 `0x3fc0004a`/`0x3fc001c9` wrapper, not opaque positional data.
 
+## Two encodings — and why the dictionary does not key the push graph
+
+An important correction to the earlier plan ("fold the dictionary in by id").
+The nv attribute ids in this dictionary (`vlan-id`=0xd701, `band`=0x2c02, …) are
+the **control-plane** object model — the ids the console and the device use in
+the `nv` getall rows (`com.mikrotik.cmr` / `com.mikrotik.cmr.config`). They are
+**not** the field layout of the id30 config-**push** graph.
+
+Verified empirically against the captured vlan-100 graph:
+
+- The dictionary ids do **not** appear literally in the graph (`d701`, `6000`,
+  `101b`, `2c02` are all absent).
+- The graph's object bodies are **positional** under the generic
+  `ClassConfig` (0x3fc0004a) / `ClassConfigValue` (0x3fc001c9) wrapper. The
+  vlan id sits at a fixed slot (object 2, entry 4), the bridge name at the
+  bridge object's trailing value chunk — both confirmed live by authoring
+  changed graphs a stock device applies.
+
+So authoring the push graph is driven by **per-type field positions**, not by the
+attribute dictionary. The dictionary remains the authority for the control-plane
+model (decoding what the device reports, and the attribute vocabulary/validation).
+
+## Config graph codec (`pkg/cmr`) — DONE
+
+The structured encoder/decoder is built:
+
+- `Graph` / `ConfigObject` with `Encode()` and `DecodeGraph()` — the id30 graph
+  as a header, ordered class-wrapped objects, index delimiters and a trailer.
+  `DecodeGraph(b).Encode()` reproduces `b` byte-for-byte, so a captured graph can
+  be parsed, edited field by field and re-emitted.
+- Typed field constructors `U32Chunk` / `VLANIDChunk` / `StrChunk` / `HexChunk`
+  (the last carries still-opaque schema positions verbatim).
+- `BuildVLANConfig` is re-expressed on top of the model (byte-identical to the
+  capture) and `ParseVLANConfig` is its inverse (graph → struct).
+- The dictionary is embedded as `pkg/cmr/schema.json` and exposed via
+  `Attrs()` / `AttrByName()` / `AttrByID()`.
+- `cfgdump -tree` decodes a graph structurally from the CLI.
+
+New config types are added by declaring their object/field layout as a `Graph`
+(once a reference graph is captured) — the framing, round-trip and typed slots
+are handled by the codec.
+
 ## Remaining work
 
 1. **Type coverage:** 256 of 410 attributes still show `unknown` — the format-2
@@ -130,11 +172,14 @@ so the object body is an m3-folded (id, value) stream under the generic
    mapped; map those and cross-reference more decompiled accessors to type them.
    A handful of params in deeper menu-tree layouts (some dotted `security.*`) are
    not yet captured by the two record shapes.
-2. **Schema-driven encoder:** fold the dictionary into `pkg/cmr` so
-   `BuildVLANConfig` generalises to `{type, {attr: value}}` → object graph, using
-   the id+type per attribute — the payoff that turns the dictionary into
-   free-form config authoring.
+2. **More per-type templates:** wifi, device, layout and multi-vlan graphs —
+   each needs a reference graph captured on hardware that can manifest it, then a
+   `Graph` layout declared for it. The vlan type is the worked example.
+3. **Positional → named fields:** the graph object body may be a second
+   (column-id, value) space assigned at runtime (the vlan-id slot unfolds to a
+   column id of 0x99, distinct from the nv id 0xd701). Mapping that space would
+   let fields be addressed by name rather than position.
 
 Lab reality: multi-vlan/wifi can't be *validated* on CHR (no 2nd switch port
-semantics, no radio), but the schema-driven encoder can be built and unit-tested
-from the dictionary, and validated against real switch/AP hardware later.
+semantics, no radio). The codec and the vlan type are built and unit-tested; the
+other types need reference captures and validation on real switch/AP hardware.

@@ -400,3 +400,30 @@ are schema positions not yet mapped; `BuildVLANConfig` carries them verbatim, an
 the device accepts the result. Mapping them (e.g. multiple vlans, other object
 classes such as wifi/device, and the two root integers) is the method's next
 turn: drive srv with varied `/cmr/…` config and diff the captured graphs.
+
+## SOLVED: the config graph codec (author + decode, round-trip exact)
+
+The graph above is now a declarative model in `pkg/cmr` rather than hand-built
+bytes:
+
+- `Graph{Objects []ConfigObject, Trailer}` and `ConfigObject{Entry, Value []Chunk}`
+  mirror the structure exactly. `(*Graph).Encode()` frames it (header, per-object
+  class wrapper, `02 00 00 01 <idx>` delimiters, trailer) and `DecodeGraph([]byte)`
+  parses it back. `DecodeGraph(b).Encode() == b` byte-for-byte for the captured
+  graph (`TestDecodeGraphRoundTrip`).
+- Fields are typed via `U32Chunk` / `VLANIDChunk` / `StrChunk`, with `HexChunk` for
+  the schema positions still carried verbatim. `BuildVLANConfig` is re-expressed on
+  the model and stays byte-identical to the capture; `ParseVLANConfig` is its
+  inverse (graph → `VLANConfig`), reading the vlan-id slot (object 2, entry 4) and
+  the bridge-name slot (bridge object, trailing value chunk).
+- `cfgdump -tree` prints the structured decode from the CLI.
+
+**The object body is positional, not nv-id-tagged.** Decoding it as an m3
+`(id,value)` stream yields column ids (vlan id → 0x99, bridge name → 0x80034) that
+do not match the control-plane nv dictionary (`vlan-id`=0xd701), and those nv ids
+never appear literally in the graph. So the attribute dictionary extracted by
+`cmd/cmr-schema` (embedded at `pkg/cmr/schema.json`, exposed by `Attrs`/
+`AttrByName`/`AttrByID`) describes the control-plane object model — not the push
+graph's field layout. Authoring the push graph is driven by per-type field
+positions; new types (wifi/device/multi-vlan) are added by capturing a reference
+graph and declaring its `Graph` layout.
